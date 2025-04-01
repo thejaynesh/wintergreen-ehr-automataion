@@ -7,6 +7,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import HomePage from "@/pages/home";
 import EhrFormPage from "@/pages/ehr-form";
+import EhrListPage from "@/pages/ehr-list";
 import ClientFormPage from "@/pages/client-form";
 import ClientListPage from "@/pages/client-list";
 import DataHistoryPage from "@/pages/data-history";
@@ -18,6 +19,8 @@ function Router() {
     <Switch>
       <Route path="/" component={HomePage} />
       <Route path="/ehr-form" component={EhrFormPage} />
+      <Route path="/ehr-form/:id" component={EhrFormPage} />
+      <Route path="/ehr-list" component={EhrListPage} />
       <Route path="/client-form" component={ClientFormPage} />
       <Route path="/client-list" component={ClientListPage} />
       <Route path="/data-history" component={DataHistoryPage} />

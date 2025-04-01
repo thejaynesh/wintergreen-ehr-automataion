@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { UserPlus, RefreshCw } from "lucide-react";
+import { UserPlus, RefreshCw, ListFilter } from "lucide-react";
 
 const HomePage = () => {
   return (
@@ -32,6 +32,17 @@ const HomePage = () => {
               <Link href="/client-list">
                 <RefreshCw className="mr-2 h-5 w-5" />
                 Refresh Data
+              </Link>
+            </Button>
+            
+            <Button 
+              className="flex items-center justify-center gap-2 py-6"
+              variant="secondary"
+              asChild
+            >
+              <Link href="/ehr-list">
+                <ListFilter className="mr-2 h-5 w-5" />
+                Manage EHR Systems
               </Link>
             </Button>
           </div>

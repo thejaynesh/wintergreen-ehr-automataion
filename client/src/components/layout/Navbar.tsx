@@ -10,6 +10,7 @@ const Navbar = () => {
   const routes = [
     { path: "/", label: "Home" },
     { path: "/ehr-form", label: "EHR Form" },
+    { path: "/ehr-list", label: "EHR List" },
     { path: "/client-form", label: "Client Form" },
     { path: "/client-list", label: "Client List" },
     { path: "/data-history", label: "Data History" },

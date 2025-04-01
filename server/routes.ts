@@ -94,6 +94,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // API routes for EHR Systems
+  app.get("/api/ehr-systems", async (req, res) => {
+    try {
+      const systems = await storage.getAllEhrSystems();
+      res.json(systems);
+    } catch (error) {
+      console.error("Error fetching EHR systems:", error);
+      res.status(500).json({ message: "Failed to fetch EHR systems" });
+    }
+  });
+  
   app.post("/api/ehr-systems", async (req, res) => {
     try {
       const systemData = insertEhrSystemSchema.parse(req.body);

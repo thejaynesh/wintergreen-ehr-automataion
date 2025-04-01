@@ -33,6 +33,7 @@ export interface IStorage {
   // EHR System methods
   getEhrSystem(id: number): Promise<EhrSystem | undefined>;
   getEhrSystemByProviderId(providerId: number): Promise<EhrSystem | undefined>;
+  getAllEhrSystems(): Promise<EhrSystem[]>;
   createEhrSystem(system: InsertEhrSystem): Promise<EhrSystem>;
   updateEhrSystem(id: number, system: Partial<InsertEhrSystem>): Promise<EhrSystem | undefined>;
 
@@ -119,6 +120,10 @@ export class DatabaseStorage implements IStorage {
   async getEhrSystemByProviderId(providerId: number): Promise<EhrSystem | undefined> {
     const [system] = await db.select().from(ehrSystems).where(eq(ehrSystems.providerId, providerId));
     return system;
+  }
+
+  async getAllEhrSystems(): Promise<EhrSystem[]> {
+    return db.select().from(ehrSystems);
   }
 
   async createEhrSystem(system: InsertEhrSystem): Promise<EhrSystem> {
