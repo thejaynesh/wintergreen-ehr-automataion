@@ -1,0 +1,54 @@
+Page: **Home**
+ - Navbar
+ - Hero Header Section: Introduction to the EHR system and its benefits.
+ - Services Section: Brief overview of the services offered by the EHR system.
+ - CTA Section: Encourage visitors to learn more about the EHR system.
+ - Testimonial Section: Customer testimonials and success stories.
+ - About Section: Information about the company and its mission.
+ - Benefits Section: Key benefits of using the EHR system.
+ - Footer
+
+Sub-pages: EHR Form, Client Form, Client List, Data Fetching History, Loading Screen, Navigation Page
+
+
+Page: **EHR Form**
+ - Navbar
+ - Header Section: Introduction to the EHR Form page and its purpose.
+ - CTA Form Section: Form to collect information about the Electronic Health Record (EHR) system.
+ - FAQ Section: Frequently asked questions about the EHR form and its usage.
+ - CTA Section: Encouragement to complete the form and submit information.
+ - Footer
+
+Page: **Client Form**
+ - Navbar
+ - Header Section: Title and brief description introducing the client form.
+ - Contact Form Section: Form fields to collect client information such as name, email, phone number, company, and address.
+ - Footer
+
+Page: **Client List**
+ - Navbar
+ - Header Section: Title and introduction to the client list page.
+ - CTA Section: Search bar for filtering clients.
+ - Features List Section: Table view of clients with five columns: Healthcare Provider name, Group ID, Contact Email, Contact Number, and a "Refresh" button.
+ - Footer
+
+Page: **Data Fetching History**
+ - Navbar
+ - Header Section: Title of the page and brief description of its purpose.
+ - Features List Section: A search bar for filtering the data fetching history records.
+ - Feature Section: Table view of the data fetching history with columns for Healthcare Provider name, Group ID, Fetch date, and S3 location.
+ - Footer
+
+Page: **Loading Screen**
+ - Navbar
+ - Feature Section: Loading animation or message to indicate data is being fetched.
+ - Footer
+
+Page: **Navigation Page**
+ - Navbar
+ - Feature Section: Button to navigate to Home page.
+ - Feature Section: Button to navigate to EHR Form page.
+ - Feature Section: Button to navigate to Client Form page.
+ - Feature Section: Button to navigate to Client List page.
+ - Feature Section: Button to navigate to Data Fetching History page.
+ - Footer
