@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -5,6 +6,7 @@ import { insertHealthcareProviderSchema } from "@shared/schema";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 
 import {
   Form,
@@ -19,6 +21,14 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogFooter, 
+  DialogHeader, 
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 // Extended schema with validation
 const formSchema = insertHealthcareProviderSchema.extend({
@@ -32,8 +42,22 @@ const formSchema = insertHealthcareProviderSchema.extend({
 
 type FormValues = z.infer<typeof formSchema>;
 
+// Helper function to handle form field null values
+const normalizeValue = (value: string | null | undefined): string => {
+  return value === null ? "" : value || "";
+};
+
+// Helper for Select fields to ensure they always have a valid value
+const normalizeSelectValue = (value: string | null | undefined): string => {
+  if (value === null || value === undefined) return "USA";
+  return value;
+};
+
 const ClientFormPage = () => {
   const { toast } = useToast();
+  const [_, navigate] = useLocation();
+  const [showFetchDialog, setShowFetchDialog] = useState(false);
+  const [savedProviderId, setSavedProviderId] = useState<number | null>(null);
   
   const defaultValues: Partial<FormValues> = {
     name: "",
@@ -59,11 +83,17 @@ const ClientFormPage = () => {
       const response = await apiRequest("POST", "/api/providers", data);
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast({
         title: "Success",
         description: "Healthcare provider has been added successfully.",
       });
+      
+      // Save the provider ID and show the fetch dialog
+      setSavedProviderId(data.id);
+      setShowFetchDialog(true);
+      
+      // Reset the form
       form.reset(defaultValues);
     },
     onError: (error) => {
@@ -77,6 +107,23 @@ const ClientFormPage = () => {
 
   const onSubmit = (values: FormValues) => {
     submitMutation.mutate(values);
+  };
+  
+  const handleFetchData = () => {
+    // Close the dialog
+    setShowFetchDialog(false);
+    
+    // Navigate to the loading page with provider ID
+    if (savedProviderId) {
+      navigate(`/loading?providerId=${savedProviderId}`);
+    } else {
+      navigate("/loading");
+    }
+  };
+  
+  const handleSkipFetch = () => {
+    // Just close the dialog
+    setShowFetchDialog(false);
   };
 
   return (
@@ -92,6 +139,26 @@ const ClientFormPage = () => {
           </p>
         </div>
       </div>
+      
+      {/* Fetch Data Dialog */}
+      <Dialog open={showFetchDialog} onOpenChange={setShowFetchDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Fetch Provider Data</DialogTitle>
+            <DialogDescription>
+              The healthcare provider has been added successfully. Would you like to fetch their data now?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleSkipFetch}>
+              Skip
+            </Button>
+            <Button onClick={handleFetchData}>
+              Fetch Data
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Form Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -114,7 +181,11 @@ const ClientFormPage = () => {
                       <FormItem>
                         <FormLabel>Healthcare Provider Name *</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter healthcare provider name" {...field} />
+                          <Input 
+                            placeholder="Enter healthcare provider name" 
+                            {...field}
+                            value={normalizeValue(field.value)}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -127,7 +198,11 @@ const ClientFormPage = () => {
                       <FormItem>
                         <FormLabel>Group ID</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g. MGH001" {...field} />
+                          <Input 
+                            placeholder="e.g. MGH001" 
+                            {...field}
+                            value={normalizeValue(field.value)}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -150,7 +225,11 @@ const ClientFormPage = () => {
                       <FormItem>
                         <FormLabel>Contact Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter contact name" {...field} />
+                          <Input 
+                            placeholder="Enter contact name" 
+                            {...field} 
+                            value={normalizeValue(field.value)}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -163,7 +242,12 @@ const ClientFormPage = () => {
                       <FormItem>
                         <FormLabel>Email Address *</FormLabel>
                         <FormControl>
-                          <Input type="email" placeholder="example@provider.com" {...field} />
+                          <Input 
+                            type="email" 
+                            placeholder="example@provider.com" 
+                            {...field}
+                            value={normalizeValue(field.value)}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -176,7 +260,11 @@ const ClientFormPage = () => {
                       <FormItem>
                         <FormLabel>Phone Number *</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g. 5551234567" {...field} />
+                          <Input 
+                            placeholder="e.g. 5551234567" 
+                            {...field}
+                            value={normalizeValue(field.value)}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -189,7 +277,11 @@ const ClientFormPage = () => {
                       <FormItem>
                         <FormLabel>Company/Organization</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter company or organization name" {...field} />
+                          <Input 
+                            placeholder="Enter company or organization name" 
+                            {...field} 
+                            value={normalizeValue(field.value)}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -212,7 +304,11 @@ const ClientFormPage = () => {
                       <FormItem>
                         <FormLabel>Street Address</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter street address" {...field} />
+                          <Input 
+                            placeholder="Enter street address" 
+                            {...field}
+                            value={normalizeValue(field.value)}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -228,7 +324,11 @@ const ClientFormPage = () => {
                       <FormItem>
                         <FormLabel>City</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter city" {...field} />
+                          <Input 
+                            placeholder="Enter city" 
+                            {...field}
+                            value={normalizeValue(field.value)}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -241,7 +341,11 @@ const ClientFormPage = () => {
                       <FormItem>
                         <FormLabel>State/Province</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter state" {...field} />
+                          <Input 
+                            placeholder="Enter state" 
+                            {...field}
+                            value={normalizeValue(field.value)}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -254,7 +358,11 @@ const ClientFormPage = () => {
                       <FormItem>
                         <FormLabel>ZIP/Postal Code</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter ZIP code" {...field} />
+                          <Input 
+                            placeholder="Enter ZIP code" 
+                            {...field}
+                            value={normalizeValue(field.value)}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -269,7 +377,9 @@ const ClientFormPage = () => {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Country</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select 
+                          onValueChange={field.onChange} 
+                          defaultValue={normalizeSelectValue(field.value)}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select a country" />

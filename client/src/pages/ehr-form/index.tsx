@@ -39,6 +39,17 @@ const formSchema = insertEhrSystemSchema.extend({
 
 type FormValues = z.infer<typeof formSchema>;
 
+// Helper function to handle form field null values
+const normalizeValue = (value: string | null | undefined): string => {
+  return value === null ? "" : value || "";
+};
+
+// Helper for Select fields to ensure they always have a valid value
+const normalizeSelectValue = (value: string | null | undefined): string => {
+  if (value === null || value === undefined) return "";
+  return value;
+};
+
 const EhrFormPage = () => {
   const { toast } = useToast();
   
@@ -117,7 +128,11 @@ const EhrFormPage = () => {
                       <FormItem>
                         <FormLabel>System Name *</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter system name" {...field} />
+                          <Input 
+                            placeholder="Enter system name" 
+                            {...field}
+                            value={normalizeValue(field.value)}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -130,7 +145,11 @@ const EhrFormPage = () => {
                       <FormItem>
                         <FormLabel>System Version</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g. 2.1.0" {...field} />
+                          <Input 
+                            placeholder="e.g. 2.1.0" 
+                            {...field}
+                            value={normalizeValue(field.value)}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -143,7 +162,11 @@ const EhrFormPage = () => {
                       <FormItem>
                         <FormLabel>API Endpoint URL *</FormLabel>
                         <FormControl>
-                          <Input placeholder="https://api.example.com/v1" {...field} />
+                          <Input 
+                            placeholder="https://api.example.com/v1" 
+                            {...field}
+                            value={normalizeValue(field.value)}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -155,7 +178,9 @@ const EhrFormPage = () => {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Data Format</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select 
+                          onValueChange={field.onChange} 
+                          defaultValue={normalizeSelectValue(field.value)}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select a format" />
@@ -188,7 +213,9 @@ const EhrFormPage = () => {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Authorization Type *</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select 
+                          onValueChange={field.onChange} 
+                          defaultValue={normalizeSelectValue(field.value)}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select authorization type" />
@@ -212,7 +239,11 @@ const EhrFormPage = () => {
                       <FormItem>
                         <FormLabel>Client ID</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter client ID" {...field} />
+                          <Input 
+                            placeholder="Enter client ID" 
+                            {...field}
+                            value={normalizeValue(field.value)}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -231,6 +262,7 @@ const EhrFormPage = () => {
                           placeholder="Enter any additional configuration details or notes"
                           rows={4}
                           {...field}
+                          value={normalizeValue(field.value)}
                         />
                       </FormControl>
                       <FormMessage />
