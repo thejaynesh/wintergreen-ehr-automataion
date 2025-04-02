@@ -33,10 +33,14 @@ import { Card, CardContent } from "@/components/ui/card";
 
 // Extended schema with validation
 const formSchema = insertEhrSystemSchema.extend({
-  ehrName: z.string().min(2, "EHR name must be at least 2 characters"),
-  apiBaseEndpoint: z.string().url("Please enter a valid URL").nullable().optional(),
-  description: z.string().optional(),
-  isSupported: z.boolean().default(true),
+  systemName: z.string().min(2, "EHR system name must be at least 2 characters"),
+  systemVersion: z.string().nullable().optional(),
+  apiEndpoint: z.string().url("Please enter a valid URL").nullable().optional(),
+  dataFormat: z.string().nullable().optional(),
+  authorizationType: z.string().min(1, "Authorization type is required"),
+  clientId: z.string().nullable().optional(),
+  clientSecret: z.string().nullable().optional(),
+  additionalNotes: z.string().nullable().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -66,30 +70,41 @@ const EhrFormPage = () => {
   
   const defaultValues: Partial<FormValues> = {
     id: ehrId || undefined,
-    ehrName: "",
-    apiBaseEndpoint: "",
-    description: "",
-    isSupported: true,
+    systemName: "",
+    systemVersion: "",
+    apiEndpoint: "",
+    dataFormat: "",
+    authorizationType: "",
+    clientId: "",
+    clientSecret: "",
+    additionalNotes: "",
     providerId: undefined
   };
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: ehrId && existingEhr ? {
-      ...existingEhr,
-      isSupported: existingEhr.isSupported === null ? true : existingEhr.isSupported,
-      providerId: existingEhr.providerId || undefined
-    } : defaultValues,
+    defaultValues
   });
 
   // Update the form when existing EHR data is loaded
   useEffect(() => {
     if (ehrId && existingEhr) {
-      form.reset({
+      // Map the database object to the form object, ensuring required fields are not null
+      const formData = {
         ...existingEhr,
-        isSupported: existingEhr.isSupported === null ? true : existingEhr.isSupported,
-        providerId: existingEhr.providerId || undefined
-      });
+        providerId: existingEhr.providerId || undefined,
+        authorizationType: existingEhr.authorizationType || "", // Convert null to empty string
+        systemName: existingEhr.systemName || "",
+        systemVersion: existingEhr.systemVersion || "",
+        apiEndpoint: existingEhr.apiEndpoint || "",
+        dataFormat: existingEhr.dataFormat || "",
+        clientId: existingEhr.clientId || "",
+        clientSecret: existingEhr.clientSecret || "",
+        additionalNotes: existingEhr.additionalNotes || "",
+        isSupported: existingEhr.isSupported === true
+      };
+      
+      form.reset(formData);
     }
   }, [ehrId, existingEhr, form]);
 
@@ -189,10 +204,10 @@ const EhrFormPage = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField
                       control={form.control}
-                      name="ehrName"
+                      name="systemName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>EHR Name *</FormLabel>
+                          <FormLabel>System Name *</FormLabel>
                           <FormControl>
                             <Input 
                               placeholder="Enter EHR system name" 
@@ -209,10 +224,10 @@ const EhrFormPage = () => {
                     />
                     <FormField
                       control={form.control}
-                      name="apiBaseEndpoint"
+                      name="apiEndpoint"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>API Base Endpoint</FormLabel>
+                          <FormLabel>API Endpoint</FormLabel>
                           <FormControl>
                             <Input 
                               placeholder="https://api.example.com/v1" 
@@ -228,17 +243,78 @@ const EhrFormPage = () => {
                       )}
                     />
                   </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                      control={form.control}
+                      name="dataFormat"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Data Format</FormLabel>
+                          <Select
+                            onValueChange={field.onChange} 
+                            value={field.value || ""}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select data format" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="JSON">JSON</SelectItem>
+                              <SelectItem value="XML">XML</SelectItem>
+                              <SelectItem value="HL7">HL7</SelectItem>
+                              <SelectItem value="FHIR">FHIR</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormDescription>
+                            Format of data exchanged with this EHR
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="authorizationType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Authorization Type *</FormLabel>
+                          <Select
+                            onValueChange={field.onChange} 
+                            value={field.value || ""}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select authorization type" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="OAuth2">OAuth 2.0</SelectItem>
+                              <SelectItem value="APIKey">API Key</SelectItem>
+                              <SelectItem value="Basic">Basic Auth</SelectItem>
+                              <SelectItem value="None">None</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormDescription>
+                            Type of authorization required for API access
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
                   <div className="grid grid-cols-1 gap-6">
                     <FormField
                       control={form.control}
-                      name="description"
+                      name="additionalNotes"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Description</FormLabel>
+                          <FormLabel>Additional Notes</FormLabel>
                           <FormControl>
                             <Textarea
-                              placeholder="Enter a description of this EHR system"
+                              placeholder="Enter additional notes about this EHR system"
                               rows={4}
                               {...field}
                               value={normalizeValue(field.value)}
@@ -266,7 +342,7 @@ const EhrFormPage = () => {
                           </div>
                           <FormControl>
                             <Switch
-                              checked={field.value}
+                              checked={field.value === true}
                               onCheckedChange={field.onChange}
                             />
                           </FormControl>

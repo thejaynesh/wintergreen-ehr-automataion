@@ -23,27 +23,30 @@ const EhrListPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
 
   // Fetch all EHR systems
-  const { data: ehrSystems = [], isLoading, error } = useQuery<EhrSystem[]>({
+  const { data: ehrSystems = [], isLoading } = useQuery<EhrSystem[]>({
     queryKey: ['/api/ehr-systems'],
+    onSuccess: (data) => {
+      console.log("Fetched EHR systems:", data);
+    },
+    onError: (error) => {
+      console.error("Error fetching EHR systems:", error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch EHR systems. Please try again later.",
+        variant: "destructive",
+      });
+    }
   });
 
   // Filter the EHR systems based on the search term
-  const filteredSystems = ehrSystems.filter((system) => {
+  const filteredSystems = ehrSystems.filter((system: EhrSystem) => {
     const searchTermLower = searchTerm.toLowerCase();
     return (
       system.systemName.toLowerCase().includes(searchTermLower) ||
       (system.apiEndpoint && system.apiEndpoint.toLowerCase().includes(searchTermLower)) ||
-      (system.dataFormat && system.dataFormat.toLowerCase().includes(searchTermLower))
+      (system.additionalNotes && system.additionalNotes.toLowerCase().includes(searchTermLower))
     );
   });
-
-  if (error) {
-    toast({
-      title: "Error",
-      description: "Failed to fetch EHR systems. Please try again later.",
-      variant: "destructive",
-    });
-  }
 
   return (
     <div>
@@ -117,8 +120,8 @@ const EhrListPage = () => {
                       <TableRow>
                         <TableHead className="w-[300px]">System Name</TableHead>
                         <TableHead>API Endpoint</TableHead>
+                        <TableHead>Additional Notes</TableHead>
                         <TableHead>Data Format</TableHead>
-                        <TableHead>Auth Type</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -155,31 +158,21 @@ const EhrListPage = () => {
                               )}
                             </TableCell>
                             <TableCell>
-                              {system.dataFormat ? (
-                                <Badge variant="outline">
-                                  {system.dataFormat.toUpperCase()}
-                                </Badge>
+                              {system.additionalNotes ? (
+                                <span className="line-clamp-2">
+                                  {system.additionalNotes}
+                                </span>
                               ) : (
                                 <span className="text-muted-foreground italic">-</span>
                               )}
                             </TableCell>
                             <TableCell>
-                              {system.authorizationType ? (
-                                <Badge
-                                  variant="secondary"
-                                  className="capitalize"
-                                >
-                                  {system.authorizationType === "oauth2"
-                                    ? "OAuth 2.0"
-                                    : system.authorizationType === "apikey"
-                                    ? "API Key"
-                                    : system.authorizationType === "jwt"
-                                    ? "JWT"
-                                    : system.authorizationType}
-                                </Badge>
-                              ) : (
-                                <span className="text-muted-foreground italic">-</span>
-                              )}
+                              <Badge
+                                variant="outline"
+                                className={"capitalize " + (system.dataFormat ? "bg-green-100 text-green-800 hover:bg-green-200" : "")}
+                              >
+                                {system.dataFormat ? system.dataFormat.toUpperCase() : "Not Specified"}
+                              </Badge>
                             </TableCell>
                             <TableCell className="text-right">
                               <div className="flex justify-end gap-2">
