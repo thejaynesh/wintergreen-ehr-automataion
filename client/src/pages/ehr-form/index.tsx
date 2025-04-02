@@ -1,9 +1,11 @@
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
-import { insertEhrSystemSchema } from "@shared/schema";
-import { useMutation } from "@tanstack/react-query";
+import { v4 as uuidv4 } from 'uuid';
+import React, { useEffect } from 'react';
+import { insertEhrSystemSchema, EhrSystem, HealthcareProvider } from "@shared/schema";
+import { useParams, useLocation } from "wouter";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -20,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import {
   Accordion,
   AccordionContent,
@@ -30,11 +33,10 @@ import { Card, CardContent } from "@/components/ui/card";
 
 // Extended schema with validation
 const formSchema = insertEhrSystemSchema.extend({
-  systemName: z.string().min(2, "System name must be at least 2 characters"),
-  apiEndpoint: z.string().url("Please enter a valid URL"),
-  authorizationType: z.enum(["oauth2", "apikey", "basic", "jwt"], {
-    required_error: "Please select an authorization type",
-  }),
+  ehrName: z.string().min(2, "EHR name must be at least 2 characters"),
+  apiBaseEndpoint: z.string().url("Please enter a valid URL").nullable().optional(),
+  description: z.string().optional(),
+  isSupported: z.boolean().default(true),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -44,33 +46,59 @@ const normalizeValue = (value: string | null | undefined): string => {
   return value === null ? "" : value || "";
 };
 
-// Helper for Select fields to ensure they always have a valid value
-const normalizeSelectValue = (value: string | null | undefined): string => {
-  if (value === null || value === undefined) return "";
-  return value;
-};
-
 const EhrFormPage = () => {
   const { toast } = useToast();
+  const params = useParams();
+  const ehrId = params?.id;
+  const [, navigate] = useLocation();
+  const queryClient = useQueryClient();
+  
+  // Fetch existing EHR if we're editing
+  const { data: existingEhr, isLoading } = useQuery<EhrSystem>({
+    queryKey: ['/api/ehr-systems', ehrId],
+    enabled: !!ehrId,
+  });
+  
+  // Fetch providers for the dropdown
+  const { data: providers = [] } = useQuery<HealthcareProvider[]>({
+    queryKey: ['/api/providers'],
+  });
   
   const defaultValues: Partial<FormValues> = {
-    systemName: "",
-    systemVersion: "",
-    apiEndpoint: "",
-    dataFormat: "",
-    authorizationType: undefined,
-    clientId: "",
-    clientSecret: "",
-    additionalNotes: "",
+    id: ehrId || undefined,
+    ehrName: "",
+    apiBaseEndpoint: "",
+    description: "",
+    isSupported: true,
+    providerId: undefined
   };
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues,
+    defaultValues: ehrId && existingEhr ? {
+      ...existingEhr,
+      isSupported: existingEhr.isSupported === null ? true : existingEhr.isSupported,
+      providerId: existingEhr.providerId || undefined
+    } : defaultValues,
   });
 
-  const submitMutation = useMutation({
+  // Update the form when existing EHR data is loaded
+  useEffect(() => {
+    if (ehrId && existingEhr) {
+      form.reset({
+        ...existingEhr,
+        isSupported: existingEhr.isSupported === null ? true : existingEhr.isSupported,
+        providerId: existingEhr.providerId || undefined
+      });
+    }
+  }, [ehrId, existingEhr, form]);
+
+  const createMutation = useMutation({
     mutationFn: async (data: FormValues) => {
+      // Generate a UUID if this is a new EHR system
+      if (!data.id) {
+        data.id = uuidv4();
+      }
       const response = await apiRequest("POST", "/api/ehr-systems", data);
       return response.json();
     },
@@ -79,7 +107,8 @@ const EhrFormPage = () => {
         title: "Success",
         description: "EHR system configuration has been saved successfully.",
       });
-      form.reset(defaultValues);
+      queryClient.invalidateQueries({ queryKey: ['/api/ehr-systems'] });
+      navigate("/ehr-list");
     },
     onError: (error) => {
       toast({
@@ -90,9 +119,37 @@ const EhrFormPage = () => {
     },
   });
 
+  const updateMutation = useMutation({
+    mutationFn: async (data: FormValues) => {
+      const response = await apiRequest("PATCH", `/api/ehr-systems/${data.id}`, data);
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "EHR system has been updated successfully.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/ehr-systems'] });
+      navigate("/ehr-list");
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: `Failed to update EHR system: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+
   const onSubmit = (values: FormValues) => {
-    submitMutation.mutate(values);
+    if (ehrId) {
+      updateMutation.mutate(values);
+    } else {
+      createMutation.mutate(values);
+    }
   };
+
+  const isSubmitting = createMutation.isPending || updateMutation.isPending;
 
   return (
     <div>
@@ -100,10 +157,13 @@ const EhrFormPage = () => {
       <div className="bg-primary-600 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
           <h1 className="text-3xl md:text-4xl font-bold font-sans mb-4">
-            Electronic Health Record System Configuration
+            {ehrId ? "Edit" : "Add"} EHR System
           </h1>
           <p className="text-lg">
-            Configure your EHR system integration details to enable secure data exchange.
+            {ehrId 
+              ? "Update your EHR system integration details" 
+              : "Configure a new EHR system to enable secure data exchange"
+            }
           </p>
         </div>
       </div>
@@ -115,181 +175,157 @@ const EhrFormPage = () => {
             <div className="mb-8">
               <h2 className="text-2xl font-semibold mb-2">EHR System Information</h2>
               <p className="text-neutral-600">
-                Please provide details about your Electronic Health Record system.
+                Please provide details about the Electronic Health Record system.
               </p>
             </div>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="systemName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>System Name *</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="Enter system name" 
-                            {...field}
-                            value={normalizeValue(field.value)}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="systemVersion"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>System Version</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="e.g. 2.1.0" 
-                            {...field}
-                            value={normalizeValue(field.value)}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="apiEndpoint"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>API Endpoint URL *</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="https://api.example.com/v1" 
-                            {...field}
-                            value={normalizeValue(field.value)}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="dataFormat"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Data Format</FormLabel>
-                        <Select 
-                          onValueChange={field.onChange} 
-                          defaultValue={normalizeSelectValue(field.value)}>
+            
+            {isLoading && ehrId ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+              </div>
+            ) : (
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                      control={form.control}
+                      name="ehrName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>EHR Name *</FormLabel>
                           <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a format" />
-                            </SelectTrigger>
+                            <Input 
+                              placeholder="Enter EHR system name" 
+                              {...field}
+                              value={normalizeValue(field.value)}
+                            />
                           </FormControl>
-                          <SelectContent>
-                            <SelectItem value="json">JSON</SelectItem>
-                            <SelectItem value="xml">XML</SelectItem>
-                            <SelectItem value="hl7">HL7</SelectItem>
-                            <SelectItem value="fhir">FHIR</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <div className="mt-8 mb-6">
-                  <h3 className="text-xl font-semibold mb-2">Authentication Details</h3>
-                  <p className="text-neutral-600">
-                    Specify how your EHR system authenticates API requests.
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="authorizationType"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Authorization Type *</FormLabel>
-                        <Select 
-                          onValueChange={field.onChange} 
-                          defaultValue={normalizeSelectValue(field.value)}>
+                          <FormDescription>
+                            The unique name for this EHR system
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="apiBaseEndpoint"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>API Base Endpoint</FormLabel>
                           <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select authorization type" />
-                            </SelectTrigger>
+                            <Input 
+                              placeholder="https://api.example.com/v1" 
+                              {...field}
+                              value={normalizeValue(field.value)}
+                            />
                           </FormControl>
-                          <SelectContent>
-                            <SelectItem value="oauth2">OAuth 2.0</SelectItem>
-                            <SelectItem value="apikey">API Key</SelectItem>
-                            <SelectItem value="basic">Basic Authentication</SelectItem>
-                            <SelectItem value="jwt">JWT Token</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="clientId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Client ID</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="Enter client ID" 
-                            {...field}
-                            value={normalizeValue(field.value)}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="additionalNotes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Additional Notes</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Enter any additional configuration details or notes"
-                          rows={4}
-                          {...field}
-                          value={normalizeValue(field.value)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="mt-8 flex flex-col md:flex-row gap-4 items-center justify-between">
-                  <p className="text-sm text-neutral-500">* Required fields</p>
-                  <div className="flex gap-4">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => form.reset(defaultValues)}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      type="submit"
-                      disabled={submitMutation.isPending}
-                    >
-                      {submitMutation.isPending ? "Submitting..." : "Submit"}
-                    </Button>
+                          <FormDescription>
+                            The base URL for the EHR API
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
-                </div>
-              </form>
-            </Form>
+
+                  <div className="grid grid-cols-1 gap-6">
+                    <FormField
+                      control={form.control}
+                      name="description"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Description</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Enter a description of this EHR system"
+                              rows={4}
+                              {...field}
+                              value={normalizeValue(field.value)}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                      control={form.control}
+                      name="isSupported"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                          <div className="space-y-0.5">
+                            <FormLabel className="text-base">
+                              Actively Supported
+                            </FormLabel>
+                            <FormDescription>
+                              Is this EHR system currently supported and maintained?
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="providerId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Healthcare Provider</FormLabel>
+                          <Select 
+                            onValueChange={(value) => field.onChange(value ? parseInt(value) : null)} 
+                            value={field.value?.toString()}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a provider (optional)" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {providers.map((provider: HealthcareProvider) => (
+                                <SelectItem key={provider.id} value={provider.id.toString()}>
+                                  {provider.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormDescription>
+                            Associate this EHR with a specific healthcare provider
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="mt-8 flex flex-col md:flex-row gap-4 items-center justify-between">
+                    <p className="text-sm text-neutral-500">* Required fields</p>
+                    <div className="flex gap-4">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => navigate("/ehr-list")}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="submit"
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? "Saving..." : (ehrId ? "Update" : "Save")}
+                      </Button>
+                    </div>
+                  </div>
+                </form>
+              </Form>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -332,7 +368,7 @@ const EhrFormPage = () => {
                   Can I update my EHR configuration later?
                 </AccordionTrigger>
                 <AccordionContent className="text-neutral-600 pt-2">
-                  Yes, you can update your configuration at any time through your account settings or by contacting our support team.
+                  Yes, you can update your configuration at any time by returning to the EHR List page and clicking the Edit button.
                 </AccordionContent>
               </AccordionItem>
             </Accordion>

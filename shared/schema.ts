@@ -29,17 +29,15 @@ export const healthcareProviders = pgTable("healthcare_providers", {
 
 // EHR Systems table
 export const ehrSystems = pgTable("ehr_systems", {
-  id: serial("id").primaryKey(),
-  systemName: text("system_name").notNull(),
-  systemVersion: text("system_version"),
-  apiEndpoint: text("api_endpoint").notNull(),
-  dataFormat: text("data_format"),
-  authorizationType: text("authorization_type").notNull(),
-  clientId: text("client_id"),
-  clientSecret: text("client_secret"),
-  additionalNotes: text("additional_notes"),
+  id: varchar("id", { length: 36 }).primaryKey(), // UUID as requested
+  ehrName: varchar("ehr_name", { length: 255 }).notNull().unique(), // Unique name as requested
+  apiBaseEndpoint: varchar("api_base_endpoint", { length: 255 }), // Base URL for the EHR API
+  description: text("description"), // Description of the EHR system
+  isSupported: boolean("is_supported").default(true), // Whether the EHR is actively supported
+  addedOn: timestamp("added_on").defaultNow(), // When the EHR was added
+  lastUpdated: timestamp("last_updated").defaultNow(), // When the EHR config was last updated
+  // Keep provider relationship for linking EHR to healthcare providers
   providerId: integer("provider_id").references(() => healthcareProviders.id),
-  createdAt: timestamp("created_at").defaultNow(),
 });
 
 // Data Fetch History table
@@ -84,7 +82,11 @@ export const insertHealthcareProviderSchema = createInsertSchema(healthcareProvi
 
 export const insertEhrSystemSchema = createInsertSchema(ehrSystems).omit({
   id: true,
-  createdAt: true,
+  addedOn: true,
+  lastUpdated: true,
+}).extend({
+  // Generate a UUID for the id if not provided
+  id: z.string().uuid().optional()
 });
 
 export const insertDataFetchHistorySchema = createInsertSchema(dataFetchHistory).omit({
