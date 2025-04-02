@@ -22,25 +22,24 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
 
   // Healthcare Provider methods
-  getHealthcareProvider(id: number): Promise<HealthcareProvider | undefined>;
-  getHealthcareProviderByGroupId(groupId: string): Promise<HealthcareProvider | undefined>;
+  getHealthcareProvider(id: string): Promise<HealthcareProvider | undefined>;
+  getHealthcareProviderByEhrId(ehrId: string): Promise<HealthcareProvider[]>;
   getAllHealthcareProviders(): Promise<HealthcareProvider[]>;
   searchHealthcareProviders(searchTerm: string): Promise<HealthcareProvider[]>;
   createHealthcareProvider(provider: InsertHealthcareProvider): Promise<HealthcareProvider>;
-  updateHealthcareProvider(id: number, provider: Partial<InsertHealthcareProvider>): Promise<HealthcareProvider | undefined>;
-  deleteHealthcareProvider(id: number): Promise<boolean>;
+  updateHealthcareProvider(id: string, provider: Partial<InsertHealthcareProvider>): Promise<HealthcareProvider | undefined>;
+  deleteHealthcareProvider(id: string): Promise<boolean>;
 
   // EHR System methods
-  getEhrSystem(id: number): Promise<EhrSystem | undefined>;
-  getEhrSystemByProviderId(providerId: number): Promise<EhrSystem | undefined>;
+  getEhrSystem(id: string): Promise<EhrSystem | undefined>;
   getAllEhrSystems(): Promise<EhrSystem[]>;
   createEhrSystem(system: InsertEhrSystem): Promise<EhrSystem>;
-  updateEhrSystem(id: number, system: Partial<InsertEhrSystem>): Promise<EhrSystem | undefined>;
+  updateEhrSystem(id: string, system: Partial<InsertEhrSystem>): Promise<EhrSystem | undefined>;
 
   // Data Fetch History methods
   getDataFetchHistory(id: number): Promise<DataFetchHistory | undefined>;
   getAllDataFetchHistory(): Promise<DataFetchHistory[]>;
-  getDataFetchHistoryByProviderId(providerId: number): Promise<DataFetchHistory[]>;
+  getDataFetchHistoryByProviderId(providerId: string): Promise<DataFetchHistory[]>;
   searchDataFetchHistory(searchTerm: string): Promise<DataFetchHistory[]>;
   createDataFetchHistory(history: InsertDataFetchHistory): Promise<DataFetchHistory>;
 }
@@ -66,14 +65,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Healthcare Provider methods
-  async getHealthcareProvider(id: number): Promise<HealthcareProvider | undefined> {
+  async getHealthcareProvider(id: string): Promise<HealthcareProvider | undefined> {
     const [provider] = await db.select().from(healthcareProviders).where(eq(healthcareProviders.id, id));
     return provider;
   }
 
-  async getHealthcareProviderByGroupId(groupId: string): Promise<HealthcareProvider | undefined> {
-    const [provider] = await db.select().from(healthcareProviders).where(eq(healthcareProviders.groupId, groupId));
-    return provider;
+  async getHealthcareProviderByEhrId(ehrId: string): Promise<HealthcareProvider[]> {
+    return db.select().from(healthcareProviders).where(eq(healthcareProviders.ehrId, ehrId));
   }
 
   async getAllHealthcareProviders(): Promise<HealthcareProvider[]> {
@@ -82,19 +80,44 @@ export class DatabaseStorage implements IStorage {
 
   async searchHealthcareProviders(searchTerm: string): Promise<HealthcareProvider[]> {
     return db.select().from(healthcareProviders).where(
-      like(healthcareProviders.name, `%${searchTerm}%`)
+      like(healthcareProviders.providerName, `%${searchTerm}%`)
     );
   }
 
   async createHealthcareProvider(provider: InsertHealthcareProvider): Promise<HealthcareProvider> {
+    // Ensure provider has an id
+    const providerData = { ...provider };
+    const { v4: uuidv4 } = require('uuid');
+    
+    // If id is undefined, always create a new UUID
+    if (!providerData.id) {
+      providerData.id = uuidv4();
+    }
+    
+    // Create a new object with only the fields that are defined in the schema
+    const insertData = {
+      id: providerData.id,
+      providerName: providerData.providerName,
+      providerType: providerData.providerType,
+      contactEmail: providerData.contactEmail,
+      contactPhone: providerData.contactPhone,
+      address: providerData.address || null,
+      ehrId: providerData.ehrId || null,
+      ehrTenantId: providerData.ehrTenantId || null,
+      ehrGroupId: providerData.ehrGroupId || null,
+      secretsManagerArn: providerData.secretsManagerArn || null,
+      status: providerData.status || 'Pending',
+      notes: providerData.notes || null
+    };
+    
     const [newProvider] = await db
       .insert(healthcareProviders)
-      .values(provider)
+      .values([insertData])
       .returning();
     return newProvider;
   }
 
-  async updateHealthcareProvider(id: number, provider: Partial<InsertHealthcareProvider>): Promise<HealthcareProvider | undefined> {
+  async updateHealthcareProvider(id: string, provider: Partial<InsertHealthcareProvider>): Promise<HealthcareProvider | undefined> {
     const [updatedProvider] = await db
       .update(healthcareProviders)
       .set(provider)
@@ -103,7 +126,7 @@ export class DatabaseStorage implements IStorage {
     return updatedProvider;
   }
 
-  async deleteHealthcareProvider(id: number): Promise<boolean> {
+  async deleteHealthcareProvider(id: string): Promise<boolean> {
     const result = await db
       .delete(healthcareProviders)
       .where(eq(healthcareProviders.id, id))
@@ -112,13 +135,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   // EHR System methods
-  async getEhrSystem(id: number): Promise<EhrSystem | undefined> {
+  async getEhrSystem(id: string): Promise<EhrSystem | undefined> {
     const [system] = await db.select().from(ehrSystems).where(eq(ehrSystems.id, id));
-    return system;
-  }
-
-  async getEhrSystemByProviderId(providerId: number): Promise<EhrSystem | undefined> {
-    const [system] = await db.select().from(ehrSystems).where(eq(ehrSystems.providerId, providerId));
     return system;
   }
 
@@ -127,14 +145,37 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createEhrSystem(system: InsertEhrSystem): Promise<EhrSystem> {
+    // Ensure system has an id
+    const systemData = { ...system };
+    const { v4: uuidv4 } = require('uuid');
+    
+    // If id is undefined, always create a new UUID
+    if (!systemData.id) {
+      systemData.id = uuidv4();
+    }
+    
+    // Create a new object with only the fields that are defined in the schema
+    const insertData = {
+      id: systemData.id,
+      systemName: systemData.systemName,
+      systemVersion: systemData.systemVersion || null,
+      apiEndpoint: systemData.apiEndpoint || null,
+      dataFormat: systemData.dataFormat || null,
+      authorizationType: systemData.authorizationType || null,
+      clientId: systemData.clientId || null,
+      clientSecret: systemData.clientSecret || null,
+      additionalNotes: systemData.additionalNotes || null,
+      isSupported: systemData.isSupported !== undefined ? systemData.isSupported : true
+    };
+    
     const [newSystem] = await db
       .insert(ehrSystems)
-      .values(system)
+      .values([insertData])
       .returning();
     return newSystem;
   }
 
-  async updateEhrSystem(id: number, system: Partial<InsertEhrSystem>): Promise<EhrSystem | undefined> {
+  async updateEhrSystem(id: string, system: Partial<InsertEhrSystem>): Promise<EhrSystem | undefined> {
     const [updatedSystem] = await db
       .update(ehrSystems)
       .set(system)
@@ -153,7 +194,7 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(dataFetchHistory).orderBy(desc(dataFetchHistory.fetchDate));
   }
 
-  async getDataFetchHistoryByProviderId(providerId: number): Promise<DataFetchHistory[]> {
+  async getDataFetchHistoryByProviderId(providerId: string): Promise<DataFetchHistory[]> {
     return db
       .select()
       .from(dataFetchHistory)
@@ -165,8 +206,7 @@ export class DatabaseStorage implements IStorage {
     const results = await db
       .select({
         history: dataFetchHistory,
-        providerName: healthcareProviders.name,
-        groupId: healthcareProviders.groupId
+        providerName: healthcareProviders.providerName
       })
       .from(dataFetchHistory)
       .innerJoin(
@@ -174,7 +214,7 @@ export class DatabaseStorage implements IStorage {
         eq(dataFetchHistory.providerId, healthcareProviders.id)
       )
       .where(
-        like(healthcareProviders.name, `%${searchTerm}%`)
+        like(healthcareProviders.providerName, `%${searchTerm}%`)
       )
       .orderBy(desc(dataFetchHistory.fetchDate));
     
@@ -184,7 +224,7 @@ export class DatabaseStorage implements IStorage {
   async createDataFetchHistory(history: InsertDataFetchHistory): Promise<DataFetchHistory> {
     const [newHistory] = await db
       .insert(dataFetchHistory)
-      .values(history)
+      .values([history])
       .returning();
     return newHistory;
   }

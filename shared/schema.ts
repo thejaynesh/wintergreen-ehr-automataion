@@ -10,27 +10,10 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
 });
 
-// Healthcare Providers table
-export const healthcareProviders = pgTable("healthcare_providers", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  groupId: text("group_id").notNull().unique(),
-  contactName: text("contact_name"),
-  email: text("email").notNull(),
-  phone: text("phone").notNull(),
-  company: text("company"),
-  address: text("address"),
-  city: text("city"),
-  state: text("state"),
-  zipCode: text("zip_code"),
-  country: text("country").default("USA"),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
 // EHR Systems table
 export const ehrSystems = pgTable("ehr_systems", {
-  id: varchar("id", { length: 36 }).primaryKey(), // UUID as requested
-  systemName: varchar("system_name", { length: 255 }).notNull(), // Unique name as requested
+  id: varchar("id", { length: 36 }).primaryKey(), // UUID primary key
+  systemName: varchar("system_name", { length: 255 }).notNull(), // Unique name for the EHR system
   systemVersion: varchar("system_version", { length: 50 }),
   apiEndpoint: varchar("api_endpoint", { length: 255 }), // Base URL for the EHR API
   dataFormat: varchar("data_format", { length: 50 }),
@@ -39,31 +22,47 @@ export const ehrSystems = pgTable("ehr_systems", {
   clientSecret: varchar("client_secret", { length: 255 }),
   additionalNotes: text("additional_notes"), // Description of the EHR system
   isSupported: boolean("is_supported").default(true), // Whether the EHR is actively supported
-  // Keep provider relationship for linking EHR to healthcare providers
-  providerId: integer("provider_id").references(() => healthcareProviders.id),
   createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Healthcare Providers table - updated according to new structure
+export const healthcareProviders = pgTable("healthcare_providers", {
+  id: varchar("provider_id", { length: 36 }).primaryKey(), // UUID Primary Key
+  providerName: varchar("provider_name", { length: 255 }).notNull(), // Name of the healthcare provider organization
+  providerType: text("provider_type").notNull(), // Type of healthcare facility
+  contactEmail: varchar("contact_email", { length: 255 }).notNull(), // Primary contact email address
+  contactPhone: varchar("contact_phone", { length: 20 }).notNull(), // Contact phone number
+  address: text("address"), // Physical address of the provider
+  ehrId: varchar("ehr_id", { length: 36 }).references(() => ehrSystems.id), // Foreign key to EHR systems table
+  ehrTenantId: varchar("ehr_tenant_id", { length: 255 }), // Tenant ID for multi-tenant EHR systems
+  ehrGroupId: varchar("ehr_group_id", { length: 255 }), // Group ID of the group data to be fetched from EHR systems
+  secretsManagerArn: varchar("secrets_manager_arn", { length: 255 }), // AWS Secrets Manager ARN storing EHR credentials
+  onboardedDate: timestamp("onboarded_date").defaultNow(), // Date when provider was onboarded into the system
+  lastDataFetch: timestamp("last_data_fetch"), // When provider data was last fetched from EHR
+  status: text("status").default("Pending"), // Current status (Active, Inactive, Pending, Error)
+  notes: text("notes"), // Additional information about the provider
 });
 
 // Data Fetch History table
 export const dataFetchHistory = pgTable("data_fetch_history", {
   id: serial("id").primaryKey(),
-  providerId: integer("provider_id").references(() => healthcareProviders.id).notNull(),
+  providerId: varchar("provider_id", { length: 36 }).references(() => healthcareProviders.id).notNull(),
   fetchDate: timestamp("fetch_date").defaultNow(),
   s3Location: text("s3_location").notNull(),
   status: text("status").default("completed"),
 });
 
 // Relations
-export const providerRelations = relations(healthcareProviders, ({ many }) => ({
-  ehrSystems: many(ehrSystems),
+export const providerRelations = relations(healthcareProviders, ({ one, many }) => ({
+  ehrSystem: one(ehrSystems, {
+    fields: [healthcareProviders.ehrId],
+    references: [ehrSystems.id],
+  }),
   fetchHistory: many(dataFetchHistory),
 }));
 
-export const ehrSystemRelations = relations(ehrSystems, ({ one }) => ({
-  provider: one(healthcareProviders, {
-    fields: [ehrSystems.providerId],
-    references: [healthcareProviders.id],
-  }),
+export const ehrSystemRelations = relations(ehrSystems, ({ many }) => ({
+  providers: many(healthcareProviders),
 }));
 
 export const dataFetchHistoryRelations = relations(dataFetchHistory, ({ one }) => ({
@@ -81,7 +80,11 @@ export const insertUserSchema = createInsertSchema(users).pick({
 
 export const insertHealthcareProviderSchema = createInsertSchema(healthcareProviders).omit({
   id: true,
-  createdAt: true,
+  onboardedDate: true,
+  lastDataFetch: true,
+}).extend({
+  // Generate a UUID for the id if not provided
+  id: z.string().uuid().optional()
 });
 
 export const insertEhrSystemSchema = createInsertSchema(ehrSystems).omit({
@@ -109,3 +112,20 @@ export type EhrSystem = typeof ehrSystems.$inferSelect;
 
 export type InsertDataFetchHistory = z.infer<typeof insertDataFetchHistorySchema>;
 export type DataFetchHistory = typeof dataFetchHistory.$inferSelect;
+
+// Provider type enum for form validation
+export const providerTypeEnum = z.enum([
+  "Hospital", 
+  "Clinic", 
+  "Private Practice", 
+  "SpecialistCenter", 
+  "Other"
+]);
+
+// Provider status enum for form validation
+export const providerStatusEnum = z.enum([
+  "Active", 
+  "Inactive", 
+  "Pending", 
+  "Error"
+]);

@@ -78,7 +78,7 @@ const EhrFormPage = () => {
     clientId: "",
     clientSecret: "",
     additionalNotes: "",
-    providerId: undefined
+    isSupported: true
   };
 
   const form = useForm<FormValues>({
@@ -91,8 +91,7 @@ const EhrFormPage = () => {
     if (ehrId && existingEhr) {
       // Map the database object to the form object, ensuring required fields are not null
       const formData = {
-        ...existingEhr,
-        providerId: existingEhr.providerId || undefined,
+        id: existingEhr.id,
         authorizationType: existingEhr.authorizationType || "", // Convert null to empty string
         systemName: existingEhr.systemName || "",
         systemVersion: existingEhr.systemVersion || "",
@@ -326,7 +325,7 @@ const EhrFormPage = () => {
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 gap-6">
                     <FormField
                       control={form.control}
                       name="isSupported"
@@ -346,36 +345,6 @@ const EhrFormPage = () => {
                               onCheckedChange={field.onChange}
                             />
                           </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="providerId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Healthcare Provider</FormLabel>
-                          <Select 
-                            onValueChange={(value) => field.onChange(value ? parseInt(value) : null)} 
-                            value={field.value?.toString()}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select a provider (optional)" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {providers.map((provider: HealthcareProvider) => (
-                                <SelectItem key={provider.id} value={provider.id.toString()}>
-                                  {provider.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormDescription>
-                            Associate this EHR with a specific healthcare provider
-                          </FormDescription>
-                          <FormMessage />
                         </FormItem>
                       )}
                     />

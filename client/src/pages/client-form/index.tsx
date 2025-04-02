@@ -2,11 +2,12 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertHealthcareProviderSchema } from "@shared/schema";
-import { useMutation } from "@tanstack/react-query";
+import { insertHealthcareProviderSchema, providerTypeEnum, providerStatusEnum } from "@shared/schema";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
+import { v4 as uuidv4 } from 'uuid';
 
 import {
   Form,
@@ -21,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   Dialog, 
   DialogContent, 
@@ -32,12 +34,18 @@ import {
 
 // Extended schema with validation
 const formSchema = insertHealthcareProviderSchema.extend({
-  name: z.string().min(2, "Healthcare provider name is required"),
-  email: z.string().email("Please enter a valid email address"),
-  phone: z
+  providerName: z.string().min(2, "Healthcare provider name is required"),
+  providerType: providerTypeEnum,
+  contactEmail: z.string().email("Please enter a valid email address"),
+  contactPhone: z
     .string()
     .min(10, "Phone number must be at least 10 digits")
     .regex(/^\d+$/, "Phone number must contain only digits"),
+  ehrGroupId: z.string().optional().nullable(),
+  ehrTenantId: z.string().optional().nullable(),
+  secretsManagerArn: z.string().optional().nullable(),
+  notes: z.string().optional().nullable(),
+  status: providerStatusEnum.optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -47,30 +55,30 @@ const normalizeValue = (value: string | null | undefined): string => {
   return value === null ? "" : value || "";
 };
 
-// Helper for Select fields to ensure they always have a valid value
-const normalizeSelectValue = (value: string | null | undefined): string => {
-  if (value === null || value === undefined) return "USA";
-  return value;
-};
-
 const ClientFormPage = () => {
   const { toast } = useToast();
   const [_, navigate] = useLocation();
   const [showFetchDialog, setShowFetchDialog] = useState(false);
-  const [savedProviderId, setSavedProviderId] = useState<number | null>(null);
+  const [savedProviderId, setSavedProviderId] = useState<string | null>(null);
+  
+  // Fetch EHR systems for dropdown
+  const { data: ehrSystems = [] } = useQuery({
+    queryKey: ['/api/ehr-systems'],
+  });
   
   const defaultValues: Partial<FormValues> = {
-    name: "",
-    groupId: "",
-    contactName: "",
-    email: "",
-    phone: "",
-    company: "",
+    id: uuidv4(), // Generate a UUID for the new provider
+    providerName: "",
+    providerType: "Clinic",
+    contactEmail: "",
+    contactPhone: "",
     address: "",
-    city: "",
-    state: "",
-    zipCode: "",
-    country: "USA",
+    ehrId: undefined,
+    ehrTenantId: "",
+    ehrGroupId: "",
+    secretsManagerArn: "",
+    status: "Pending",
+    notes: "",
   };
 
   const form = useForm<FormValues>({
@@ -176,7 +184,7 @@ const ClientFormPage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField
                     control={form.control}
-                    name="name"
+                    name="providerName"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Healthcare Provider Name *</FormLabel>
@@ -193,17 +201,26 @@ const ClientFormPage = () => {
                   />
                   <FormField
                     control={form.control}
-                    name="groupId"
+                    name="providerType"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Group ID</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="e.g. MGH001" 
-                            {...field}
-                            value={normalizeValue(field.value)}
-                          />
-                        </FormControl>
+                        <FormLabel>Provider Type *</FormLabel>
+                        <Select 
+                          onValueChange={field.onChange} 
+                          value={field.value || "Clinic"}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select provider type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Hospital">Hospital</SelectItem>
+                            <SelectItem value="Clinic">Clinic</SelectItem>
+                            <SelectItem value="Private Practice">Private Practice</SelectItem>
+                            <SelectItem value="SpecialistCenter">Specialist Center</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -220,24 +237,7 @@ const ClientFormPage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField
                     control={form.control}
-                    name="contactName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Contact Name</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="Enter contact name" 
-                            {...field} 
-                            value={normalizeValue(field.value)}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="email"
+                    name="contactEmail"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Email Address *</FormLabel>
@@ -255,7 +255,7 @@ const ClientFormPage = () => {
                   />
                   <FormField
                     control={form.control}
-                    name="phone"
+                    name="contactPhone"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Phone Number *</FormLabel>
@@ -270,17 +270,21 @@ const ClientFormPage = () => {
                       </FormItem>
                     )}
                   />
+                </div>
+
+                <div className="grid grid-cols-1 gap-6">
                   <FormField
                     control={form.control}
-                    name="company"
+                    name="address"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Company/Organization</FormLabel>
+                        <FormLabel>Address</FormLabel>
                         <FormControl>
-                          <Input 
-                            placeholder="Enter company or organization name" 
-                            {...field} 
+                          <Textarea 
+                            placeholder="Enter complete address" 
+                            {...field}
                             value={normalizeValue(field.value)}
+                            rows={3}
                           />
                         </FormControl>
                         <FormMessage />
@@ -290,59 +294,52 @@ const ClientFormPage = () => {
                 </div>
 
                 <div className="mt-8 mb-6">
-                  <h3 className="text-xl font-semibold mb-2">Address Information</h3>
+                  <h3 className="text-xl font-semibold mb-2">EHR Integration</h3>
                   <p className="text-neutral-600">
-                    Physical location of the healthcare provider.
+                    Details for connecting to the EHR system.
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField
                     control={form.control}
-                    name="address"
+                    name="ehrId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Street Address</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="Enter street address" 
-                            {...field}
-                            value={normalizeValue(field.value)}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="city"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>City</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="Enter city" 
-                            {...field}
-                            value={normalizeValue(field.value)}
-                          />
-                        </FormControl>
+                        <FormLabel>EHR System</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value || ""}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select EHR system" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {ehrSystems.map((system: any) => (
+                              <SelectItem key={system.id} value={system.id}>
+                                {system.systemName}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          The EHR system used by this provider
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                   <FormField
                     control={form.control}
-                    name="state"
+                    name="ehrTenantId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>State/Province</FormLabel>
+                        <FormLabel>EHR Tenant ID</FormLabel>
                         <FormControl>
                           <Input 
-                            placeholder="Enter state" 
+                            placeholder="Enter tenant ID for multi-tenant EHR" 
                             {...field}
                             value={normalizeValue(field.value)}
                           />
@@ -353,17 +350,37 @@ const ClientFormPage = () => {
                   />
                   <FormField
                     control={form.control}
-                    name="zipCode"
+                    name="ehrGroupId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>ZIP/Postal Code</FormLabel>
+                        <FormLabel>EHR Group ID</FormLabel>
                         <FormControl>
                           <Input 
-                            placeholder="Enter ZIP code" 
+                            placeholder="Enter group ID for data fetching" 
                             {...field}
                             value={normalizeValue(field.value)}
                           />
                         </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="secretsManagerArn"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>AWS Secrets Manager ARN</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="arn:aws:secretsmanager:region:id:secret:name" 
+                            {...field}
+                            value={normalizeValue(field.value)}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          ARN for the AWS Secrets Manager entry that stores credentials
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -373,26 +390,43 @@ const ClientFormPage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField
                     control={form.control}
-                    name="country"
+                    name="status"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Country</FormLabel>
+                        <FormLabel>Status</FormLabel>
                         <Select 
                           onValueChange={field.onChange} 
-                          defaultValue={normalizeSelectValue(field.value)}>
+                          value={field.value || "Pending"}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select a country" />
+                              <SelectValue placeholder="Select status" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="USA">United States</SelectItem>
-                            <SelectItem value="CAN">Canada</SelectItem>
-                            <SelectItem value="MEX">Mexico</SelectItem>
-                            <SelectItem value="GBR">United Kingdom</SelectItem>
-                            <SelectItem value="AUS">Australia</SelectItem>
+                            <SelectItem value="Active">Active</SelectItem>
+                            <SelectItem value="Inactive">Inactive</SelectItem>
+                            <SelectItem value="Pending">Pending</SelectItem>
+                            <SelectItem value="Error">Error</SelectItem>
                           </SelectContent>
                         </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="notes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Additional Notes</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Enter any additional notes about this provider" 
+                            {...field}
+                            value={normalizeValue(field.value)}
+                            rows={3}
+                          />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
