@@ -31,7 +31,7 @@ const Navbar = () => {
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
               <Link href="/" className="text-primary text-xl font-bold">
-                Health<span className="text-secondary-600">Record</span>
+                Winter<span className="text-secondary-600">green</span>
               </Link>
             </div>
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
@@ -50,11 +50,7 @@ const Navbar = () => {
               ))}
             </div>
           </div>
-          <div className="hidden sm:ml-6 sm:flex sm:items-center">
-            <Button variant="default" size="sm">
-              Sign In
-            </Button>
-          </div>
+          {/* Sign-in button removed as requested */}
           <div className="-mr-2 flex items-center sm:hidden">
             <button
               onClick={toggleMobileMenu}
@@ -89,13 +85,7 @@ const Navbar = () => {
               </Link>
             ))}
           </div>
-          <div className="pt-4 pb-3 border-t border-neutral-200">
-            <div className="flex items-center px-4">
-              <Button className="w-full" onClick={closeMobileMenu}>
-                Sign In
-              </Button>
-            </div>
-          </div>
+          {/* Mobile sign-in button removed as requested */}
         </div>
       )}
     </nav>

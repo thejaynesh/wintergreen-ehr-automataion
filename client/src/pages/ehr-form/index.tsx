@@ -214,9 +214,7 @@ const EhrFormPage = () => {
                               value={normalizeValue(field.value)}
                             />
                           </FormControl>
-                          <FormDescription>
-                            The unique name for this EHR system
-                          </FormDescription>
+                          {/* Description removed as requested */}
                           <FormMessage />
                         </FormItem>
                       )}
@@ -234,75 +232,14 @@ const EhrFormPage = () => {
                               value={normalizeValue(field.value)}
                             />
                           </FormControl>
-                          <FormDescription>
-                            The base URL for the EHR API
-                          </FormDescription>
+                          {/* Description removed as requested */}
                           <FormMessage />
                         </FormItem>
                       )}
                     />
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField
-                      control={form.control}
-                      name="dataFormat"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Data Format</FormLabel>
-                          <Select
-                            onValueChange={field.onChange} 
-                            value={field.value || ""}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select data format" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="JSON">JSON</SelectItem>
-                              <SelectItem value="XML">XML</SelectItem>
-                              <SelectItem value="HL7">HL7</SelectItem>
-                              <SelectItem value="FHIR">FHIR</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormDescription>
-                            Format of data exchanged with this EHR
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="authorizationType"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Authorization Type *</FormLabel>
-                          <Select
-                            onValueChange={field.onChange} 
-                            value={field.value || ""}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select authorization type" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="OAuth2">OAuth 2.0</SelectItem>
-                              <SelectItem value="APIKey">API Key</SelectItem>
-                              <SelectItem value="Basic">Basic Auth</SelectItem>
-                              <SelectItem value="None">None</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormDescription>
-                            Type of authorization required for API access
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  {/* Data Format and Authorization Type fields removed as requested */}
 
                   <div className="grid grid-cols-1 gap-6">
                     <FormField
@@ -310,10 +247,10 @@ const EhrFormPage = () => {
                       name="additionalNotes"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Additional Notes</FormLabel>
+                          <FormLabel>Description</FormLabel>
                           <FormControl>
                             <Textarea
-                              placeholder="Enter additional notes about this EHR system"
+                              placeholder="Enter description for this EHR system"
                               rows={4}
                               {...field}
                               value={normalizeValue(field.value)}
