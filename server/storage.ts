@@ -96,7 +96,7 @@ export class DatabaseStorage implements IStorage {
     
     // Create a new object with only the fields that are defined in the schema
     const insertData = {
-      id: providerData.id,
+      id: providerData.id as string, // Cast to string to resolve TypeScript error
       providerName: providerData.providerName,
       providerType: providerData.providerType,
       contactEmail: providerData.contactEmail,
@@ -112,7 +112,7 @@ export class DatabaseStorage implements IStorage {
     
     const [newProvider] = await db
       .insert(healthcareProviders)
-      .values([insertData])
+      .values(insertData) // Remove the array brackets to fix TypeScript error
       .returning();
     return newProvider;
   }
@@ -156,7 +156,7 @@ export class DatabaseStorage implements IStorage {
     
     // Create a new object with only the fields that are defined in the schema
     const insertData = {
-      id: systemData.id,
+      id: systemData.id as string, // Cast to string to resolve TypeScript error
       systemName: systemData.systemName,
       systemVersion: systemData.systemVersion || null,
       apiEndpoint: systemData.apiEndpoint || null,
@@ -174,7 +174,7 @@ export class DatabaseStorage implements IStorage {
     
     const [newSystem] = await db
       .insert(ehrSystems)
-      .values([insertData])
+      .values(insertData) // Remove the array brackets to fix TypeScript error
       .returning();
     return newSystem;
   }
@@ -228,7 +228,7 @@ export class DatabaseStorage implements IStorage {
   async createDataFetchHistory(history: InsertDataFetchHistory): Promise<DataFetchHistory> {
     const [newHistory] = await db
       .insert(dataFetchHistory)
-      .values([history])
+      .values(history)
       .returning();
     return newHistory;
   }

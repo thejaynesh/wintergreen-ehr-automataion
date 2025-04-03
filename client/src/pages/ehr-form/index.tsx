@@ -314,10 +314,10 @@ const EhrFormPage = () => {
                       name="conUrl"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Consent URL</FormLabel>
+                          <FormLabel>Connection URL</FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="https://api.example.com/consent"
+                              placeholder="https://api.example.com/connect"
                               {...field}
                               value={normalizeValue(field.value)}
                             />
