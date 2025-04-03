@@ -2,12 +2,16 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertHealthcareProviderSchema, providerTypeEnum, providerStatusEnum } from "@shared/schema";
+import {
+  insertHealthcareProviderSchema,
+  providerTypeEnum,
+  providerStatusEnum,
+} from "@shared/schema";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 
 import {
   Form,
@@ -20,15 +24,21 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 
@@ -60,12 +70,12 @@ const ClientFormPage = () => {
   const [_, navigate] = useLocation();
   const [showFetchDialog, setShowFetchDialog] = useState(false);
   const [savedProviderId, setSavedProviderId] = useState<string | null>(null);
-  
+
   // Fetch EHR systems for dropdown
   const { data: ehrSystems = [] } = useQuery({
-    queryKey: ['/api/ehr-systems'],
+    queryKey: ["/api/ehr-systems"],
   });
-  
+
   const defaultValues: Partial<FormValues> = {
     id: uuidv4(), // Generate a UUID for the new provider
     providerName: "",
@@ -96,11 +106,11 @@ const ClientFormPage = () => {
         title: "Success",
         description: "Healthcare provider has been added successfully.",
       });
-      
+
       // Save the provider ID and show the fetch dialog
       setSavedProviderId(data.id);
       setShowFetchDialog(true);
-      
+
       // Reset the form
       form.reset(defaultValues);
     },
@@ -116,11 +126,11 @@ const ClientFormPage = () => {
   const onSubmit = (values: FormValues) => {
     submitMutation.mutate(values);
   };
-  
+
   const handleFetchData = () => {
     // Close the dialog
     setShowFetchDialog(false);
-    
+
     // Navigate to the loading page with provider ID
     if (savedProviderId) {
       navigate(`/loading?providerId=${savedProviderId}`);
@@ -128,7 +138,7 @@ const ClientFormPage = () => {
       navigate("/loading");
     }
   };
-  
+
   const handleSkipFetch = () => {
     // Just close the dialog
     setShowFetchDialog(false);
@@ -137,7 +147,7 @@ const ClientFormPage = () => {
   return (
     <div>
       {/* Header Section */}
-      <div className="bg-primary-600 text-white">
+      {/* <div className="bg-primary-600 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
           <h1 className="text-3xl md:text-4xl font-bold font-sans mb-4">
             Add New Healthcare Client
@@ -146,24 +156,23 @@ const ClientFormPage = () => {
             Register a new healthcare provider to connect with the EHR system.
           </p>
         </div>
-      </div>
-      
+      </div> */}
+
       {/* Fetch Data Dialog */}
       <Dialog open={showFetchDialog} onOpenChange={setShowFetchDialog}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Fetch Provider Data</DialogTitle>
             <DialogDescription>
-              The healthcare provider has been added successfully. Would you like to fetch their data now?
+              The healthcare provider has been added successfully. Would you
+              like to fetch their data now?
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={handleSkipFetch}>
               Skip
             </Button>
-            <Button onClick={handleFetchData}>
-              Fetch Data
-            </Button>
+            <Button onClick={handleFetchData}>Fetch Data</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -173,9 +182,14 @@ const ClientFormPage = () => {
         <Card>
           <CardContent className="p-6 md:p-8">
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-8"
+              >
                 <div className="mb-8">
-                  <h2 className="text-2xl font-semibold mb-2">Client Information</h2>
+                  <h2 className="text-2xl font-semibold mb-2">
+                    Client Information
+                  </h2>
                   <p className="text-neutral-600">
                     Basic information about the healthcare provider.
                   </p>
@@ -189,8 +203,8 @@ const ClientFormPage = () => {
                       <FormItem>
                         <FormLabel>Healthcare Provider Name *</FormLabel>
                         <FormControl>
-                          <Input 
-                            placeholder="Enter healthcare provider name" 
+                          <Input
+                            placeholder="Enter healthcare provider name"
                             {...field}
                             value={normalizeValue(field.value)}
                           />
@@ -205,9 +219,10 @@ const ClientFormPage = () => {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Provider Type *</FormLabel>
-                        <Select 
-                          onValueChange={field.onChange} 
-                          value={field.value || "Clinic"}>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value || "Clinic"}
+                        >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select provider type" />
@@ -216,8 +231,12 @@ const ClientFormPage = () => {
                           <SelectContent>
                             <SelectItem value="Hospital">Hospital</SelectItem>
                             <SelectItem value="Clinic">Clinic</SelectItem>
-                            <SelectItem value="Private Practice">Private Practice</SelectItem>
-                            <SelectItem value="SpecialistCenter">Specialist Center</SelectItem>
+                            <SelectItem value="Private Practice">
+                              Private Practice
+                            </SelectItem>
+                            <SelectItem value="SpecialistCenter">
+                              Specialist Center
+                            </SelectItem>
                             <SelectItem value="Other">Other</SelectItem>
                           </SelectContent>
                         </Select>
@@ -228,7 +247,9 @@ const ClientFormPage = () => {
                 </div>
 
                 <div className="mt-8 mb-6">
-                  <h3 className="text-xl font-semibold mb-2">Contact Details</h3>
+                  <h3 className="text-xl font-semibold mb-2">
+                    Contact Details
+                  </h3>
                   <p className="text-neutral-600">
                     Primary contact information for this healthcare provider.
                   </p>
@@ -242,9 +263,9 @@ const ClientFormPage = () => {
                       <FormItem>
                         <FormLabel>Email Address *</FormLabel>
                         <FormControl>
-                          <Input 
-                            type="email" 
-                            placeholder="example@provider.com" 
+                          <Input
+                            type="email"
+                            placeholder="example@provider.com"
                             {...field}
                             value={normalizeValue(field.value)}
                           />
@@ -260,8 +281,8 @@ const ClientFormPage = () => {
                       <FormItem>
                         <FormLabel>Phone Number *</FormLabel>
                         <FormControl>
-                          <Input 
-                            placeholder="e.g. 5551234567" 
+                          <Input
+                            placeholder="e.g. 5551234567"
                             {...field}
                             value={normalizeValue(field.value)}
                           />
@@ -280,8 +301,8 @@ const ClientFormPage = () => {
                       <FormItem>
                         <FormLabel>Address</FormLabel>
                         <FormControl>
-                          <Textarea 
-                            placeholder="Enter complete address" 
+                          <Textarea
+                            placeholder="Enter complete address"
                             {...field}
                             value={normalizeValue(field.value)}
                             rows={3}
@@ -294,7 +315,9 @@ const ClientFormPage = () => {
                 </div>
 
                 <div className="mt-8 mb-6">
-                  <h3 className="text-xl font-semibold mb-2">EHR Integration</h3>
+                  <h3 className="text-xl font-semibold mb-2">
+                    EHR Integration
+                  </h3>
                   <p className="text-neutral-600">
                     Details for connecting to the EHR system.
                   </p>
@@ -338,8 +361,8 @@ const ClientFormPage = () => {
                       <FormItem>
                         <FormLabel>EHR Tenant ID</FormLabel>
                         <FormControl>
-                          <Input 
-                            placeholder="Enter tenant ID for multi-tenant EHR" 
+                          <Input
+                            placeholder="Enter tenant ID for multi-tenant EHR"
                             {...field}
                             value={normalizeValue(field.value)}
                           />
@@ -355,8 +378,8 @@ const ClientFormPage = () => {
                       <FormItem>
                         <FormLabel>EHR Group ID</FormLabel>
                         <FormControl>
-                          <Input 
-                            placeholder="Enter group ID for data fetching" 
+                          <Input
+                            placeholder="Enter group ID for data fetching"
                             {...field}
                             value={normalizeValue(field.value)}
                           />
@@ -372,14 +395,15 @@ const ClientFormPage = () => {
                       <FormItem>
                         <FormLabel>AWS Secrets Manager ARN</FormLabel>
                         <FormControl>
-                          <Input 
-                            placeholder="arn:aws:secretsmanager:region:id:secret:name" 
+                          <Input
+                            placeholder="arn:aws:secretsmanager:region:id:secret:name"
                             {...field}
                             value={normalizeValue(field.value)}
                           />
                         </FormControl>
                         <FormDescription>
-                          ARN for the AWS Secrets Manager entry that stores credentials
+                          ARN for the AWS Secrets Manager entry that stores
+                          credentials
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -394,9 +418,10 @@ const ClientFormPage = () => {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Status</FormLabel>
-                        <Select 
-                          onValueChange={field.onChange} 
-                          value={field.value || "Pending"}>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value || "Pending"}
+                        >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select status" />
@@ -420,8 +445,8 @@ const ClientFormPage = () => {
                       <FormItem>
                         <FormLabel>Additional Notes</FormLabel>
                         <FormControl>
-                          <Textarea 
-                            placeholder="Enter any additional notes about this provider" 
+                          <Textarea
+                            placeholder="Enter any additional notes about this provider"
                             {...field}
                             value={normalizeValue(field.value)}
                             rows={3}
@@ -443,10 +468,7 @@ const ClientFormPage = () => {
                     >
                       Cancel
                     </Button>
-                    <Button
-                      type="submit"
-                      disabled={submitMutation.isPending}
-                    >
+                    <Button type="submit" disabled={submitMutation.isPending}>
                       {submitMutation.isPending ? "Saving..." : "Save Client"}
                     </Button>
                   </div>

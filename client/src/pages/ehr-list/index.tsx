@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { EhrSystem } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 import {
   Table,
@@ -15,16 +16,22 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Edit, Search, Plus } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { FileText, Edit, Search, Plus, ExternalLink, Link2 } from "lucide-react";
 import { Link } from "wouter";
 
 const EhrListPage = () => {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
+  const queryClient = useQueryClient();
 
   // Fetch all EHR systems
-  const { data: ehrSystems = [], isLoading, error } = useQuery<EhrSystem[]>({
-    queryKey: ['/api/ehr-systems']
+  const {
+    data: ehrSystems = [],
+    isLoading,
+    error,
+  } = useQuery<EhrSystem[]>({
+    queryKey: ["/api/ehr-systems"],
   });
 
   // Log success and handle errors
@@ -42,22 +49,57 @@ const EhrListPage = () => {
     }
   }, [ehrSystems, error, toast]);
 
+  // Mutation to update the support status
+  const updateSupportMutation = useMutation({
+    mutationFn: async ({ id, isSupported }: { id: string; isSupported: boolean }) => {
+      const response = await apiRequest(
+        "PATCH", 
+        `/api/ehr-systems/${id}`,
+        { isSupported }
+      );
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/ehr-systems"] });
+      toast({
+        title: "Success",
+        description: "EHR system support status updated successfully.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: `Failed to update support status: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Handler for toggling support status
+  const handleToggleSupport = (id: string, currentStatus: boolean) => {
+    updateSupportMutation.mutate({ id, isSupported: !currentStatus });
+  };
+
   // Filter the EHR systems based on the search term
   const filteredSystems = ehrSystems.filter((system: EhrSystem) => {
     if (!searchTerm) return true;
-    
+
     const searchTermLower = searchTerm.toLowerCase();
     return (
       system.systemName.toLowerCase().includes(searchTermLower) ||
-      (system.apiEndpoint && system.apiEndpoint.toLowerCase().includes(searchTermLower)) ||
-      (system.additionalNotes && system.additionalNotes.toLowerCase().includes(searchTermLower))
+      (system.apiEndpoint &&
+        system.apiEndpoint.toLowerCase().includes(searchTermLower)) ||
+      (system.additionalNotes &&
+        system.additionalNotes.toLowerCase().includes(searchTermLower)) ||
+      (system.documentationLink &&
+        system.documentationLink.toLowerCase().includes(searchTermLower))
     );
   });
 
   return (
     <div>
       {/* Header Section */}
-      <div className="bg-primary-600 text-white">
+      {/* <div className="bg-primary-600 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between">
             <div>
@@ -78,7 +120,7 @@ const EhrListPage = () => {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Search and Filters */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -115,6 +157,7 @@ const EhrListPage = () => {
                   <TableHead>System Name</TableHead>
                   <TableHead>API Endpoint</TableHead>
                   <TableHead>Description</TableHead>
+                  <TableHead>Documentation</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -122,13 +165,16 @@ const EhrListPage = () => {
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-4">
+                    <TableCell colSpan={6} className="text-center py-4">
                       Loading EHR systems...
                     </TableCell>
                   </TableRow>
                 ) : filteredSystems.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-4 text-neutral-500">
+                    <TableCell
+                      colSpan={6}
+                      className="text-center py-4 text-neutral-500"
+                    >
                       No EHR systems found matching your search criteria.
                     </TableCell>
                   </TableRow>
@@ -164,12 +210,40 @@ const EhrListPage = () => {
                         )}
                       </TableCell>
                       <TableCell>
-                        <Badge 
-                          variant={system.isSupported ? "default" : "outline"}
-                          className={system.isSupported ? "bg-green-100 text-green-800 hover:bg-green-200" : ""}
-                        >
-                          {system.isSupported ? "Supported" : "Not Supported"}
-                        </Badge>
+                        {system.documentationLink ? (
+                          <a 
+                            href={system.documentationLink} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="flex items-center text-blue-600 hover:text-blue-800 gap-1.5"
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                            <span className="truncate max-w-xs">Documentation</span>
+                          </a>
+                        ) : (
+                          <span className="text-neutral-500 italic">
+                            Not specified
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Badge
+                            variant={system.isSupported ? "default" : "outline"}
+                            className={
+                              system.isSupported
+                                ? "bg-green-100 text-green-800 hover:bg-green-200"
+                                : ""
+                            }
+                          >
+                            {system.isSupported ? "Supported" : "Not Supported"}
+                          </Badge>
+                          <Switch
+                            checked={system.isSupported === true}
+                            onCheckedChange={() => handleToggleSupport(system.id, !!system.isSupported)}
+                            aria-label={`Set ${system.systemName} support status`}
+                          />
+                        </div>
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">

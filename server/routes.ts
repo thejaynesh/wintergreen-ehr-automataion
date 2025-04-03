@@ -23,7 +23,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/providers/:id", async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = req.params.id;
       const provider = await storage.getHealthcareProvider(id);
       
       if (!provider) {
@@ -56,7 +56,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/providers/:id", async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = req.params.id;
       const providerData = insertHealthcareProviderSchema.partial().parse(req.body);
       const updatedProvider = await storage.updateHealthcareProvider(id, providerData);
       
@@ -79,7 +79,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/providers/:id", async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = req.params.id;
       const success = await storage.deleteHealthcareProvider(id);
       
       if (!success) {
@@ -123,7 +123,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/ehr-systems/:id", async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = req.params.id;
       const system = await storage.getEhrSystem(id);
       
       if (!system) {
@@ -139,7 +139,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/ehr-systems/:id", async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = req.params.id;
       const systemData = insertEhrSystemSchema.partial().parse(req.body);
       const updatedSystem = await storage.updateEhrSystem(id, systemData);
       
@@ -159,6 +159,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to update EHR system" });
     }
   });
+  
+  app.patch("/api/ehr-systems/:id", async (req, res) => {
+    try {
+      const id = req.params.id;
+      
+      // Parse only the isSupported field
+      const updateSchema = z.object({
+        isSupported: z.boolean()
+      });
+      
+      const { isSupported } = updateSchema.parse(req.body);
+      const updatedSystem = await storage.updateEhrSystem(id, { isSupported });
+      
+      if (!updatedSystem) {
+        return res.status(404).json({ message: "EHR system not found" });
+      }
+      
+      res.json(updatedSystem);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Validation error", 
+          errors: error.errors 
+        });
+      }
+      console.error("Error updating EHR system support status:", error);
+      res.status(500).json({ message: "Failed to update EHR system support status" });
+    }
+  });
 
   // API routes for Data Fetch History
   app.get("/api/data-history", async (req, res) => {
@@ -173,7 +202,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/data-history/provider/:providerId", async (req, res) => {
     try {
-      const providerId = parseInt(req.params.providerId);
+      const providerId = req.params.providerId;
       const history = await storage.getDataFetchHistoryByProviderId(providerId);
       res.json(history);
     } catch (error) {

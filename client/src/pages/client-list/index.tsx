@@ -16,14 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Search,
-  RefreshCw,
-  Edit,
-  Trash2,
-  User,
-  Plus,
-} from "lucide-react";
+import { Search, RefreshCw, Edit, Trash2, User, Plus } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -40,7 +33,9 @@ const ClientListPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [providers, setProviders] = useState<HealthcareProvider[]>([]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedProviderId, setSelectedProviderId] = useState<number | null>(null);
+  const [selectedProviderId, setSelectedProviderId] = useState<number | null>(
+    null,
+  );
 
   // Fetch all providers
   const { data, isLoading, isError, error } = useQuery<HealthcareProvider[]>({
@@ -125,7 +120,7 @@ const ClientListPage = () => {
   return (
     <div>
       {/* Header Section */}
-      <div className="bg-primary-600 text-white">
+      {/* <div className="bg-primary-600 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
           <h1 className="text-3xl md:text-4xl font-bold font-sans mb-4">
             Healthcare Provider Clients
@@ -134,7 +129,7 @@ const ClientListPage = () => {
             View and manage all registered healthcare providers in the system.
           </p>
         </div>
-      </div>
+      </div> */}
 
       {/* Search and Filters */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -184,13 +179,19 @@ const ClientListPage = () => {
                   </TableRow>
                 ) : isError ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-4 text-red-500">
+                    <TableCell
+                      colSpan={5}
+                      className="text-center py-4 text-red-500"
+                    >
                       Error loading clients: {error?.message}
                     </TableCell>
                   </TableRow>
                 ) : filteredProviders.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-4 text-neutral-500">
+                    <TableCell
+                      colSpan={5}
+                      className="text-center py-4 text-neutral-500"
+                    >
                       No clients found matching your search criteria.
                     </TableCell>
                   </TableRow>
@@ -245,24 +246,14 @@ const ClientListPage = () => {
           <div className="bg-neutral-50 px-4 py-3 border-t border-neutral-200 sm:px-6">
             <div className="flex items-center justify-between">
               <div className="text-sm text-neutral-700">
-                Showing{" "}
-                <span>{filteredProviders.length}</span>{" "}
+                Showing <span>{filteredProviders.length}</span>{" "}
                 {filteredProviders.length === 1 ? "client" : "clients"}
               </div>
               <div className="flex-1 flex justify-between sm:justify-end">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled
-                  className="mr-3"
-                >
+                <Button variant="outline" size="sm" disabled className="mr-3">
                   Previous
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled
-                >
+                <Button variant="outline" size="sm" disabled>
                   Next
                 </Button>
               </div>
@@ -277,7 +268,8 @@ const ClientListPage = () => {
           <DialogHeader>
             <DialogTitle>Confirm Deletion</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this healthcare provider? This action cannot be undone.
+              Are you sure you want to delete this healthcare provider? This
+              action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

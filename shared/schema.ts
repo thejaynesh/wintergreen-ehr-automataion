@@ -16,6 +16,10 @@ export const ehrSystems = pgTable("ehr_systems", {
   systemName: varchar("system_name", { length: 255 }).notNull(), // Unique name for the EHR system
   systemVersion: varchar("system_version", { length: 50 }),
   apiEndpoint: varchar("api_endpoint", { length: 255 }), // Base URL for the EHR API
+  documentationLink: varchar("documentation_link", { length: 255 }), // Link to documentation
+  authUrl: varchar("auth_url", { length: 255 }), // Authorization URL
+  conUrl: varchar("con_url", { length: 255 }), // Consent URL
+  bulkfhirUrl: varchar("bulkfhir_url", { length: 255 }), // Bulk FHIR URL
   dataFormat: varchar("data_format", { length: 50 }),
   authorizationType: varchar("authorization_type", { length: 50 }),
   clientId: varchar("client_id", { length: 255 }),
