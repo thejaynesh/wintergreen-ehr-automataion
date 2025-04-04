@@ -53,7 +53,7 @@ const formSchema = insertEhrSystemSchema.extend({
   conUrl: z.string().url("Please enter a valid URL").nullable().optional(),
   bulkfhirUrl: z.string().url("Please enter a valid URL").nullable().optional(),
   dataFormat: z.string().nullable().optional(),
-  authorizationType: z.string().min(1, "Authorization type is required"),
+  // authorizationType field removed
   clientId: z.string().nullable().optional(),
   clientSecret: z.string().nullable().optional(),
   additionalNotes: z.string().nullable().optional(),
@@ -94,7 +94,7 @@ const EhrFormPage = () => {
     conUrl: "",
     bulkfhirUrl: "",
     dataFormat: "",
-    authorizationType: "",
+    // authorizationType removed
     clientId: "",
     clientSecret: "",
     additionalNotes: "",
@@ -112,7 +112,7 @@ const EhrFormPage = () => {
       // Map the database object to the form object, ensuring required fields are not null
       const formData = {
         id: existingEhr.id,
-        authorizationType: existingEhr.authorizationType || "", // Convert null to empty string
+        // authorizationType removed
         systemName: existingEhr.systemName || "",
         systemVersion: existingEhr.systemVersion || "",
         apiEndpoint: existingEhr.apiEndpoint || "",
@@ -353,31 +353,7 @@ const EhrFormPage = () => {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField
-                      control={form.control}
-                      name="authorizationType"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Authorization Type *</FormLabel>
-                          <FormControl>
-                            <Select 
-                              onValueChange={field.onChange} 
-                              defaultValue={field.value || ""}>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select authorization type" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="OAuth2">OAuth 2.0</SelectItem>
-                                <SelectItem value="Basic">Basic Auth</SelectItem>
-                                <SelectItem value="Bearer">Bearer Token</SelectItem>
-                                <SelectItem value="None">None</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    {/* Authorization Type field removed as requested */}
                     <FormField
                       control={form.control}
                       name="dataFormat"
@@ -401,6 +377,29 @@ const EhrFormPage = () => {
                             </Select>
                           </FormControl>
                           <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    {/* Add isSupported toggle switch here */}
+                    <FormField
+                      control={form.control}
+                      name="isSupported"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                          <div className="space-y-0.5">
+                            <FormLabel className="text-base">
+                              Actively Supported
+                            </FormLabel>
+                            <FormDescription>
+                              Is this EHR system actively supported?
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
                         </FormItem>
                       )}
                     />

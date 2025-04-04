@@ -21,7 +21,7 @@ export const ehrSystems = pgTable("ehr_systems", {
   conUrl: varchar("con_url", { length: 255 }), // Connection URL
   bulkfhirUrl: varchar("bulkfhir_url", { length: 255 }), // Bulk FHIR URL
   dataFormat: varchar("data_format", { length: 50 }),
-  authorizationType: varchar("authorization_type", { length: 50 }),
+  // authorizationType removed as requested
   clientId: varchar("client_id", { length: 255 }),
   clientSecret: varchar("client_secret", { length: 255 }),
   additionalNotes: text("additional_notes"), // Description of the EHR system
