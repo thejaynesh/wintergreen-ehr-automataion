@@ -14,6 +14,7 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, like, desc } from "drizzle-orm";
+import { v4 as uuidv4 } from "uuid";
 
 export interface IStorage {
   // User methods
@@ -87,7 +88,6 @@ export class DatabaseStorage implements IStorage {
   async createHealthcareProvider(provider: InsertHealthcareProvider): Promise<HealthcareProvider> {
     // Ensure provider has an id
     const providerData = { ...provider };
-    const { v4: uuidv4 } = require('uuid');
     
     // If id is undefined, always create a new UUID
     if (!providerData.id) {
@@ -147,7 +147,6 @@ export class DatabaseStorage implements IStorage {
   async createEhrSystem(system: InsertEhrSystem): Promise<EhrSystem> {
     // Ensure system has an id
     const systemData = { ...system };
-    const { v4: uuidv4 } = require('uuid');
     
     // If id is undefined, always create a new UUID
     if (!systemData.id) {
@@ -164,10 +163,6 @@ export class DatabaseStorage implements IStorage {
       authUrl: systemData.authUrl || null,
       conUrl: systemData.conUrl || null,
       bulkfhirUrl: systemData.bulkfhirUrl || null,
-      dataFormat: systemData.dataFormat || null,
-      authorizationType: systemData.authorizationType || null,
-      clientId: systemData.clientId || null,
-      clientSecret: systemData.clientSecret || null,
       additionalNotes: systemData.additionalNotes || null,
       isSupported: systemData.isSupported !== undefined ? systemData.isSupported : true
     };
