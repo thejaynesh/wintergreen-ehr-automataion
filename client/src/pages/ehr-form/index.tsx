@@ -22,8 +22,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -31,6 +29,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -184,9 +184,16 @@ const EhrFormPage = () => {
   });
 
   const onSubmit = (values: FormValues) => {
+    console.log("Form submitted with values:", values);
+    
+    // Check for validation errors
+    console.log("Form errors:", form.formState.errors);
+    
     if (ehrId) {
+      console.log("Updating existing EHR system with ID:", ehrId);
       updateMutation.mutate(values);
     } else {
+      console.log("Creating new EHR system");
       createMutation.mutate(values);
     }
   };
@@ -335,6 +342,98 @@ const EhrFormPage = () => {
                           <FormControl>
                             <Input
                               placeholder="https://api.example.com/fhir/bulk"
+                              {...field}
+                              value={normalizeValue(field.value)}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                      control={form.control}
+                      name="authorizationType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Authorization Type *</FormLabel>
+                          <FormControl>
+                            <Select 
+                              onValueChange={field.onChange} 
+                              defaultValue={field.value || ""}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select authorization type" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="OAuth2">OAuth 2.0</SelectItem>
+                                <SelectItem value="Basic">Basic Auth</SelectItem>
+                                <SelectItem value="Bearer">Bearer Token</SelectItem>
+                                <SelectItem value="None">None</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="dataFormat"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Data Format</FormLabel>
+                          <FormControl>
+                            <Select 
+                              onValueChange={field.onChange} 
+                              defaultValue={field.value || ""}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select data format" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="FHIR">FHIR</SelectItem>
+                                <SelectItem value="HL7">HL7</SelectItem>
+                                <SelectItem value="JSON">JSON</SelectItem>
+                                <SelectItem value="XML">XML</SelectItem>
+                                <SelectItem value="Other">Other</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                      control={form.control}
+                      name="clientId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Client ID</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Enter client ID"
+                              {...field}
+                              value={normalizeValue(field.value)}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="clientSecret"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Client Secret</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Enter client secret"
+                              type="password"
                               {...field}
                               value={normalizeValue(field.value)}
                             />
