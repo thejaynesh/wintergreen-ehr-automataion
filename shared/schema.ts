@@ -20,10 +20,7 @@ export const ehrSystems = pgTable("ehr_systems", {
   authUrl: varchar("auth_url", { length: 255 }), // Authorization URL
   conUrl: varchar("con_url", { length: 255 }), // Connection URL
   bulkfhirUrl: varchar("bulkfhir_url", { length: 255 }), // Bulk FHIR URL
-  dataFormat: varchar("data_format", { length: 50 }),
-  // authorizationType removed as requested
-  clientId: varchar("client_id", { length: 255 }),
-  clientSecret: varchar("client_secret", { length: 255 }),
+  // dataFormat, clientId, clientSecret removed as requested
   additionalNotes: text("additional_notes"), // Description of the EHR system
   isSupported: boolean("is_supported").default(true), // Whether the EHR is actively supported
   createdAt: timestamp("created_at").defaultNow(),

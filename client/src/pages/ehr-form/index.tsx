@@ -52,12 +52,14 @@ const formSchema = insertEhrSystemSchema.extend({
   authUrl: z.string().url("Please enter a valid URL").nullable().optional(),
   conUrl: z.string().url("Please enter a valid URL").nullable().optional(),
   bulkfhirUrl: z.string().url("Please enter a valid URL").nullable().optional(),
-  dataFormat: z.string().nullable().optional(),
-  // authorizationType field removed
-  clientId: z.string().nullable().optional(),
-  clientSecret: z.string().nullable().optional(),
   additionalNotes: z.string().nullable().optional(),
-});
+  // Always set isSupported to true for new records
+  isSupported: z.literal(true).default(true),
+}).transform(data => ({
+  ...data,
+  // Ensure isSupported is always true for new records
+  isSupported: true,
+}));
 
 type FormValues = z.infer<typeof formSchema>;
 
@@ -93,12 +95,9 @@ const EhrFormPage = () => {
     authUrl: "",
     conUrl: "",
     bulkfhirUrl: "",
-    dataFormat: "",
-    // authorizationType removed
-    clientId: "",
-    clientSecret: "",
+    // dataFormat, authorizationType, clientId, clientSecret removed
     additionalNotes: "",
-    isSupported: true,
+    // isSupported removed from form (will be set to true by default)
   };
 
   const form = useForm<FormValues>({
@@ -112,7 +111,6 @@ const EhrFormPage = () => {
       // Map the database object to the form object, ensuring required fields are not null
       const formData = {
         id: existingEhr.id,
-        // authorizationType removed
         systemName: existingEhr.systemName || "",
         systemVersion: existingEhr.systemVersion || "",
         apiEndpoint: existingEhr.apiEndpoint || "",
@@ -120,11 +118,9 @@ const EhrFormPage = () => {
         authUrl: existingEhr.authUrl || "",
         conUrl: existingEhr.conUrl || "",
         bulkfhirUrl: existingEhr.bulkfhirUrl || "",
-        dataFormat: existingEhr.dataFormat || "",
-        clientId: existingEhr.clientId || "",
-        clientSecret: existingEhr.clientSecret || "",
         additionalNotes: existingEhr.additionalNotes || "",
-        isSupported: existingEhr.isSupported === true,
+        // Set hidden default value for isSupported (but not shown in form)
+        isSupported: true,
       };
 
       form.reset(formData);
@@ -352,96 +348,7 @@ const EhrFormPage = () => {
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Authorization Type field removed as requested */}
-                    <FormField
-                      control={form.control}
-                      name="dataFormat"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Data Format</FormLabel>
-                          <FormControl>
-                            <Select 
-                              onValueChange={field.onChange} 
-                              defaultValue={field.value || ""}>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select data format" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="FHIR">FHIR</SelectItem>
-                                <SelectItem value="HL7">HL7</SelectItem>
-                                <SelectItem value="JSON">JSON</SelectItem>
-                                <SelectItem value="XML">XML</SelectItem>
-                                <SelectItem value="Other">Other</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    {/* Add isSupported toggle switch here */}
-                    <FormField
-                      control={form.control}
-                      name="isSupported"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                          <div className="space-y-0.5">
-                            <FormLabel className="text-base">
-                              Actively Supported
-                            </FormLabel>
-                            <FormDescription>
-                              Is this EHR system actively supported?
-                            </FormDescription>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField
-                      control={form.control}
-                      name="clientId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Client ID</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="Enter client ID"
-                              {...field}
-                              value={normalizeValue(field.value)}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="clientSecret"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Client Secret</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="Enter client secret"
-                              type="password"
-                              {...field}
-                              value={normalizeValue(field.value)}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  {/* DataFormat, isSupported, clientId, clientSecret fields removed as requested */}
 
                   <div className="grid grid-cols-1 gap-6">
                     <FormField
