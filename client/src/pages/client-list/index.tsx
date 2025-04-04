@@ -33,7 +33,7 @@ const ClientListPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [providers, setProviders] = useState<HealthcareProvider[]>([]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedProviderId, setSelectedProviderId] = useState<number | null>(
+  const [selectedProviderId, setSelectedProviderId] = useState<string | null>(
     null,
   );
 
@@ -52,16 +52,16 @@ const ClientListPage = () => {
   const filteredProviders = providers.filter((provider) => {
     const searchTerm = searchQuery.toLowerCase();
     return (
-      provider.name.toLowerCase().includes(searchTerm) ||
-      provider.groupId.toLowerCase().includes(searchTerm) ||
-      provider.email.toLowerCase().includes(searchTerm) ||
-      provider.phone.includes(searchTerm)
+      provider.providerName.toLowerCase().includes(searchTerm) ||
+      (provider.ehrGroupId && provider.ehrGroupId.toLowerCase().includes(searchTerm)) ||
+      provider.contactEmail.toLowerCase().includes(searchTerm) ||
+      provider.contactPhone.includes(searchTerm)
     );
   });
 
   // Delete provider mutation
   const deleteProviderMutation = useMutation({
-    mutationFn: async (id: number) => {
+    mutationFn: async (id: string) => {
       await apiRequest("DELETE", `/api/providers/${id}`);
     },
     onSuccess: () => {
@@ -81,7 +81,7 @@ const ClientListPage = () => {
     },
   });
 
-  const handleDelete = (id: number) => {
+  const handleDelete = (id: string) => {
     setSelectedProviderId(id);
     setDeleteDialogOpen(true);
   };
@@ -113,7 +113,7 @@ const ClientListPage = () => {
     },
   });
 
-  const handleRefresh = (id: number) => {
+  const handleRefresh = (id: string) => {
     refreshProviderMutation.mutate();
   };
 
@@ -201,14 +201,14 @@ const ClientListPage = () => {
                       <TableCell>
                         <div className="flex items-center">
                           <div className="w-8 h-8 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center mr-3">
-                            <span>{provider.name.charAt(0)}</span>
+                            <span>{provider.providerName.charAt(0)}</span>
                           </div>
-                          <div className="font-medium">{provider.name}</div>
+                          <div className="font-medium">{provider.providerName}</div>
                         </div>
                       </TableCell>
-                      <TableCell>{provider.groupId}</TableCell>
-                      <TableCell>{provider.email}</TableCell>
-                      <TableCell>{provider.phone}</TableCell>
+                      <TableCell>{provider.ehrGroupId || '-'}</TableCell>
+                      <TableCell>{provider.contactEmail}</TableCell>
+                      <TableCell>{provider.contactPhone}</TableCell>
                       <TableCell className="text-right space-x-2">
                         <Button
                           variant="ghost"
