@@ -37,7 +37,7 @@ export const healthcareProviders = pgTable("healthcare_providers", {
   ehrId: varchar("ehr_id", { length: 36 }).references(() => ehrSystems.id), // Foreign key to EHR systems table
   ehrTenantId: varchar("ehr_tenant_id", { length: 255 }), // Tenant ID for multi-tenant EHR systems
   ehrGroupId: varchar("ehr_group_id", { length: 255 }), // Group ID of the group data to be fetched from EHR systems
-  secretsManagerArn: varchar("secrets_manager_arn", { length: 255 }), // AWS Secrets Manager ARN storing EHR credentials
+  // secretsManagerArn removed as requested
   onboardedDate: timestamp("onboarded_date").defaultNow(), // Date when provider was onboarded into the system
   lastDataFetch: timestamp("last_data_fetch"), // When provider data was last fetched from EHR
   status: text("status").default("Pending"), // Current status (Active, Inactive, Pending, Error)

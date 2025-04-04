@@ -105,7 +105,7 @@ export class DatabaseStorage implements IStorage {
       ehrId: providerData.ehrId || null,
       ehrTenantId: providerData.ehrTenantId || null,
       ehrGroupId: providerData.ehrGroupId || null,
-      secretsManagerArn: providerData.secretsManagerArn || null,
+      // secretsManagerArn removed
       status: providerData.status || 'Pending',
       notes: providerData.notes || null
     };

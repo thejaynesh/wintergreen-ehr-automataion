@@ -6,6 +6,7 @@ import {
   insertHealthcareProviderSchema,
   providerTypeEnum,
   providerStatusEnum,
+  type EhrSystem,
 } from "@shared/schema";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -53,7 +54,7 @@ const formSchema = insertHealthcareProviderSchema.extend({
     .regex(/^\d+$/, "Phone number must contain only digits"),
   ehrGroupId: z.string().optional().nullable(),
   ehrTenantId: z.string().optional().nullable(),
-  secretsManagerArn: z.string().optional().nullable(),
+  // secretsManagerArn removed
   notes: z.string().optional().nullable(),
   status: providerStatusEnum.optional(),
 });
@@ -72,7 +73,7 @@ const ClientFormPage = () => {
   const [savedProviderId, setSavedProviderId] = useState<string | null>(null);
 
   // Fetch EHR systems for dropdown
-  const { data: ehrSystems = [] } = useQuery({
+  const { data: ehrSystems = [] } = useQuery<EhrSystem[]>({
     queryKey: ["/api/ehr-systems"],
   });
 
@@ -86,7 +87,7 @@ const ClientFormPage = () => {
     ehrId: undefined,
     ehrTenantId: "",
     ehrGroupId: "",
-    secretsManagerArn: "",
+    // secretsManagerArn removed
     status: "Pending",
     notes: "",
   };
@@ -340,7 +341,7 @@ const ClientFormPage = () => {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {ehrSystems.map((system: any) => (
+                            {ehrSystems.map((system) => (
                               <SelectItem key={system.id} value={system.id}>
                                 {system.systemName}
                               </SelectItem>
@@ -388,27 +389,7 @@ const ClientFormPage = () => {
                       </FormItem>
                     )}
                   />
-                  <FormField
-                    control={form.control}
-                    name="secretsManagerArn"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>AWS Secrets Manager ARN</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="arn:aws:secretsmanager:region:id:secret:name"
-                            {...field}
-                            value={normalizeValue(field.value)}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          ARN for the AWS Secrets Manager entry that stores
-                          credentials
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+{/* AWS Secrets Manager ARN field removed */}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
