@@ -8,5 +8,5 @@ if (!process.env.DATABASE_URL) {
 }
 
 // Connect to PostgreSQL
-const queryClient = postgres(process.env.DATABASE_URL);
-export const db = drizzle(queryClient, { schema });
+// const queryClient = postgres(process.env.DATABASE_URL);
+// export const db = drizzle(queryClient, { schema });

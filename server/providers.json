@@ -1,0 +1,38 @@
+[
+    {
+      "id": "1",
+      "providerName": "Good Health Clinic",
+      "ehrGroupId": "group1",
+      "contactEmail": "contact@goodhealthclinic.com",
+      "contactPhone": "1234567890"
+    },
+    {
+      "id": "2",
+      "providerName": "Community Health",
+      "ehrGroupId": "community-health",
+      "contactEmail": "info@communityhealth.org",
+      "contactPhone": "2345678901"
+    },
+    {
+      "id": "3",
+      "providerName": "Medicare Plus",
+      "ehrGroupId": "medicare-plus",
+      "contactEmail": "support@medicareplus.com",
+      "contactPhone": "3456789012"
+    },
+    {
+      "id": "4",
+      "providerName": "Health First",
+      "ehrGroupId": "HF001",
+      "contactEmail": "contact@healthfirst.net",
+      "contactPhone": "4567890123"
+    },
+    {
+      "id": "5",
+      "providerName": "Wellness Associates",
+      "ehrGroupId": "wa123",
+      "contactEmail": "hello@wellnessassociates.com",
+      "contactPhone": "5678901234"
+    }
+  ]
+  
