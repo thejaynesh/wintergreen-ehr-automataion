@@ -1,3 +1,4 @@
+// App.tsx
 import React from 'react';
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
@@ -15,15 +16,15 @@ import DataHistoryPage from "@/pages/data-history";
 import LoadingPage from "@/pages/loading";
 import NavigationPage from "@/pages/navigation";
 
-// Import Amplify, aws-exports, and the withAuthenticator HOC from Amplify UI
+// Import Amplify and configuration
 import { Amplify } from 'aws-amplify';
-import awsconfig from './aws-exports';
+import awsconfig from '../../shared/aws-exports';
 import { withAuthenticator } from '@aws-amplify/ui-react';
 
 // Configure Amplify with your AWS resources (Cognito, etc.)
 Amplify.configure(awsconfig);
 
-function Router() {
+function Router(): JSX.Element {
   return (
     <Switch>
       <Route path="/" component={HomePage} />
@@ -40,7 +41,8 @@ function Router() {
   );
 }
 
-function App() {
+
+function App(): JSX.Element {
   return (
     <QueryClientProvider client={queryClient}>
       <div className="flex flex-col min-h-screen">
@@ -57,4 +59,3 @@ function App() {
 
 // Wrap your App with withAuthenticator to enable Cognito authentication
 export default withAuthenticator(App);
-

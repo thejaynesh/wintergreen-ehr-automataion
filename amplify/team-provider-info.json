@@ -1,20 +1,19 @@
 {
   "dev": {
     "awscloudformation": {
-      "AuthRoleName": "amplify-cognito-dev-eae0c-authRole",
-      "UnauthRoleArn": "arn:aws:iam::851725283526:role/amplify-cognito-dev-eae0c-unauthRole",
-      "AuthRoleArn": "arn:aws:iam::851725283526:role/amplify-cognito-dev-eae0c-authRole",
+      "AuthRoleName": "amplify-wintergreenehrautoma-dev-f3ca3-authRole",
+      "UnauthRoleArn": "arn:aws:iam::851725283526:role/amplify-wintergreenehrautoma-dev-f3ca3-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::851725283526:role/amplify-wintergreenehrautoma-dev-f3ca3-authRole",
       "Region": "us-east-1",
-      "DeploymentBucketName": "amplify-cognito-dev-eae0c-deployment",
-      "UnauthRoleName": "amplify-cognito-dev-eae0c-unauthRole",
-      "StackName": "amplify-cognito-dev-eae0c",
-      "StackId": "arn:aws:cloudformation:us-east-1:851725283526:stack/amplify-cognito-dev-eae0c/67e5ed60-18be-11f0-8f4d-0e549a9da91d",
-      "AmplifyAppId": "d1jmuu0qupj404"
+      "DeploymentBucketName": "amplify-wintergreenehrautoma-dev-f3ca3-deployment",
+      "UnauthRoleName": "amplify-wintergreenehrautoma-dev-f3ca3-unauthRole",
+      "StackName": "amplify-wintergreenehrautoma-dev-f3ca3",
+      "StackId": "arn:aws:cloudformation:us-east-1:851725283526:stack/amplify-wintergreenehrautoma-dev-f3ca3/0f1c5ea0-18da-11f0-8e15-0afff2b91c67",
+      "AmplifyAppId": "d38lys5nwc6tqa"
     },
     "categories": {
       "auth": {
-        "cognito66c96222": {},
-        "userPoolGroups": {}
+        "wintergreenehrautomac81a8a37": {}
       }
     }
   }

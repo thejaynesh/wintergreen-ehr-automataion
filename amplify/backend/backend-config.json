@@ -1,6 +1,6 @@
 {
   "auth": {
-    "cognito66c96222": {
+    "wintergreenehrautomac81a8a37": {
       "customAuth": false,
       "dependsOn": [],
       "frontendAuthConfig": {
@@ -25,22 +25,6 @@
       },
       "providerPlugin": "awscloudformation",
       "service": "Cognito"
-    },
-    "userPoolGroups": {
-      "dependsOn": [
-        {
-          "attributes": [
-            "UserPoolId",
-            "AppClientIDWeb",
-            "AppClientID",
-            "IdentityPoolId"
-          ],
-          "category": "auth",
-          "resourceName": "cognito66c96222"
-        }
-      ],
-      "providerPlugin": "awscloudformation",
-      "service": "Cognito-UserPool-Groups"
     }
   }
 }

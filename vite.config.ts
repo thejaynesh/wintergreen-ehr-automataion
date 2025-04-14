@@ -17,7 +17,7 @@ export default defineConfig({
     process.env.REPL_ID !== undefined
       ? [
           await import("@replit/vite-plugin-cartographer").then((m) =>
-            m.cartographer(),
+            m.cartographer()
           ),
         ]
       : []),
@@ -30,8 +30,24 @@ export default defineConfig({
     },
   },
   root: path.resolve(__dirname, "client"),
+  define: {
+    global: {}, // Define `global` to avoid the "global is not defined" error
+  },
+  server: {
+    hmr: {
+      overlay: false, // Disable the runtime error overlay
+    },
+  },
+  optimizeDeps: {
+    include: ["aws-amplify"],
+  },
   build: {
     outDir: path.resolve(__dirname, "dist/public"),
     emptyOutDir: true,
+    rollupOptions: {
+      // If you still need to externalize aws-exports, keep the line below.
+      // Otherwise, it can be removed.
+      external: ["aws-exports"],
+    },
   },
 });
