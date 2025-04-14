@@ -33,7 +33,7 @@ const sampleProviders: HealthcareProvider[] = [
     id: "1",
     providerName: "Karleigh Mcdaniel",
     providerType: "Clinic",
-    ehrGroupId: "Voluptatum animi qu",
+    ehrGroupId: "VOLP-2024",
     contactEmail: "jydutax@mailinator.com",
     contactPhone: "2323267770",
     address: "123 Main St, Suite 100, San Francisco, CA 94105",

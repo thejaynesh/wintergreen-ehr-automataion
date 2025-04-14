@@ -43,6 +43,49 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+// Sample EHR systems for demonstration
+const sampleEhrSystems: EhrSystem[] = [
+  {
+    id: "1",
+    systemName: "Athena",
+    systemVersion: null,
+    apiEndpoint: "https://api.athenahealth.com/v1/fhir",
+    documentationLink: "https://developer.athenahealth.com/docs",
+    authUrl: null,
+    conUrl: null,
+    bulkfhirUrl: null,
+    additionalNotes: "Cloud-based EHR, practice management, and medical billing services with FHIR support",
+    isSupported: true,
+    createdAt: null,
+  },
+  {
+    id: "2",
+    systemName: "eClinicalWorks",
+    systemVersion: null,
+    apiEndpoint: "https://api.eclinicalworks.com/wsi/v2/",
+    documentationLink: "https://developer.eclinicalworks.com/docs/",
+    authUrl: null,
+    conUrl: null,
+    bulkfhirUrl: null,
+    additionalNotes: "Ambulatory EHR system with comprehensive practice management tools and interoperability solutions",
+    isSupported: true,
+    createdAt: null,
+  },
+  {
+    id: "3",
+    systemName: "Cerner",
+    systemVersion: null,
+    apiEndpoint: "https://api.cerner.com/v1/millennium",
+    documentationLink: "https://developer.cerner.com/api-reference",
+    authUrl: null,
+    conUrl: null,
+    bulkfhirUrl: null,
+    additionalNotes: "RESTful API for accessing Cerner Millennium EHR data",
+    isSupported: true,
+    createdAt: null,
+  },
+];
+
 // Extended schema with validation
 const formSchema = insertHealthcareProviderSchema.extend({
   providerName: z.string().min(2, "Healthcare provider name is required"),
@@ -74,10 +117,15 @@ const ClientFormPage = () => {
   const [showFetchDialog, setShowFetchDialog] = useState(false);
   const [savedProviderId, setSavedProviderId] = useState<string | null>(null);
 
-  // Fetch EHR systems for dropdown
+  // For demo purposes, use the sample EHR systems
+  const ehrSystems = sampleEhrSystems;
+
+  /* 
+  // In a real application, you would fetch the EHR systems from the API
   const { data: ehrSystems = [] } = useQuery<EhrSystem[]>({
     queryKey: ["/api/ehr-systems"],
   });
+  */
 
   const defaultValues: Partial<FormValues> = {
     id: uuidv4(), // Generate a UUID for the new provider
@@ -103,8 +151,12 @@ const ClientFormPage = () => {
 
   const submitMutation = useMutation({
     mutationFn: async (data: FormValues) => {
-      const response = await apiRequest("POST", "/api/providers", data);
-      return response.json();
+      // For demo, just return the data
+      return { ...data, id: savedProviderId || uuidv4() };
+      
+      // In a real application:
+      // const response = await apiRequest("POST", "/api/providers", data);
+      // return response.json();
     },
     onSuccess: (data) => {
       toast({
@@ -151,18 +203,6 @@ const ClientFormPage = () => {
 
   return (
     <div>
-      {/* Header Section */}
-      {/* <div className="bg-primary-600 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
-          <h1 className="text-3xl md:text-4xl font-bold font-sans mb-4">
-            Add New Healthcare Client
-          </h1>
-          <p className="text-lg">
-            Register a new healthcare provider to connect with the EHR system.
-          </p>
-        </div>
-      </div> */}
-
       {/* Fetch Data Dialog */}
       <Dialog open={showFetchDialog} onOpenChange={setShowFetchDialog}>
         <DialogContent>
@@ -437,7 +477,6 @@ const ClientFormPage = () => {
                       </FormItem>
                     )}
                   />
-                  {/* AWS Secrets Manager ARN field removed */}
                   <FormField
                     control={form.control}
                     name="status"

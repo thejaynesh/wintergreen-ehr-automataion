@@ -25,6 +25,7 @@ import {
 import {
   Badge
 } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 
 // EHR System interface
 interface EhrSystem {
@@ -40,23 +41,23 @@ interface EhrSystem {
 const sampleEhrSystems: EhrSystem[] = [
   {
     id: "1",
-    systemName: "wdawdawweeeeeeeeeeeeeeeeee",
-    apiEndpoint: "https://dowm/v1/s",
-    description: null,
-    documentationUrl: "https://dowm/v1/Documentation",
+    systemName: "Athena",
+    apiEndpoint: "https://api.athenahealth.com/v1/fhir",
+    description: "Cloud-based EHR, practice management, and medical billing services with FHIR support",
+    documentationUrl: "https://developer.athenahealth.com/docs",
     status: "Supported"
   },
   {
     id: "2",
-    systemName: "Epic EHR Connect",
-    apiEndpoint: "https://api.epicehr.com/fhir/v4",
-    description: "FHIR API connection for Epic EHR systems",
-    documentationUrl: "https://dev.epicehr.com/docs",
+    systemName: "eClinicalWorks",
+    apiEndpoint: "https://api.eclinicalworks.com/wsi/v2/", 
+    description: "Ambulatory EHR system with comprehensive practice management tools and interoperability solutions",
+    documentationUrl: "https://developer.eclinicalworks.com/docs/",
     status: "Supported"
   },
   {
     id: "3",
-    systemName: "Cerner Millennium API",
+    systemName: "Cerner",
     apiEndpoint: "https://api.cerner.com/v1/millennium",
     description: "RESTful API for accessing Cerner Millennium EHR data",
     documentationUrl: "https://developer.cerner.com/api-reference",
@@ -70,15 +71,19 @@ const EhrListPage = () => {
   const [ehrSystems, setEhrSystems] = useState<EhrSystem[]>(sampleEhrSystems);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedSystemId, setSelectedSystemId] = useState<string | null>(null);
+  const [showSupportedOnly, setShowSupportedOnly] = useState(true);
 
-  // Filter EHR systems based on search query
+  // Filter EHR systems based on search query and status filter
   const filteredSystems = ehrSystems.filter((system) => {
     const searchTerm = searchQuery.toLowerCase();
-    return (
+    const matchesSearch = (
       system.systemName.toLowerCase().includes(searchTerm) ||
       system.apiEndpoint.toLowerCase().includes(searchTerm) ||
       (system.description && system.description.toLowerCase().includes(searchTerm))
     );
+    
+    // If showSupportedOnly is true, only show systems with "Supported" status
+    return matchesSearch && (!showSupportedOnly || system.status === "Supported");
   });
 
   const handleDelete = (id: string) => {
@@ -142,7 +147,21 @@ const EhrListPage = () => {
               />
             </div>
           </div>
-          <div>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center space-x-2">
+              <Button 
+                variant={showSupportedOnly ? "default" : "outline"}
+                className="flex items-center gap-2"
+                onClick={() => setShowSupportedOnly(!showSupportedOnly)}
+              >
+                {showSupportedOnly ? (
+                  <CheckCircle className="h-4 w-4" />
+                ) : (
+                  <CheckCircle className="h-4 w-4 text-neutral-300" />
+                )}
+                Supported
+              </Button>
+            </div>
             <Button asChild>
               <Link href="/ehr-form">
                 <Plus className="mr-2 h-4 w-4" /> Add New EHR System
