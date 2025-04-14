@@ -18,7 +18,7 @@ import NavigationPage from "@/pages/navigation";
 
 // Import Amplify and configuration
 import { Amplify } from 'aws-amplify';
-import awsconfig from 'aws-exports';
+import awsconfig from '../../shared/aws-exports';
 import { withAuthenticator } from '@aws-amplify/ui-react';
 
 // Configure Amplify with your AWS resources (Cognito, etc.)
