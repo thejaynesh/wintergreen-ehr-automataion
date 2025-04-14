@@ -1,9 +1,8 @@
 import { Link, useLocation } from "wouter";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 
-const Navbar = () => {
+const Navbar = ({ handleSignOut }: { handleSignOut: () => void }) => {
   const [location] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -50,7 +49,15 @@ const Navbar = () => {
               ))}
             </div>
           </div>
-          {/* Sign-in button removed as requested */}
+          {/* Sign Out Button */}
+          <div className="hidden sm:flex items-center">
+            <button
+              onClick={handleSignOut}
+              className="p-2 bg-blue-600 text-white font-medium rounded hover:bg-blue-700"
+            >
+              Sign Out
+            </button>
+          </div>
           <div className="-mr-2 flex items-center sm:hidden">
             <button
               onClick={toggleMobileMenu}
@@ -85,7 +92,15 @@ const Navbar = () => {
               </Link>
             ))}
           </div>
-          {/* Mobile sign-in button removed as requested */}
+          {/* Mobile Sign Out Button */}
+          <div className="pt-4 pb-3 border-t border-neutral-200">
+            <button
+              onClick={handleSignOut}
+              className="block w-full text-left px-4 py-2 text-sm font-medium text-blue-600 hover:bg-neutral-100"
+            >
+              Sign Out
+            </button>
+          </div>
         </div>
       )}
     </nav>

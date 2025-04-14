@@ -547,16 +547,8 @@ const AuthComponent = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <div className="flex flex-col min-h-screen">
-        <Navbar />
-        {/* Back button for signing out */}
-        <div className="flex justify-end">
-          <button
-            onClick={handleSignOut}
-            className="p-2 m-4 bg-blue-500 hover:bg-blue-600 text-white rounded"
-          >
-            Sign Out
-          </button>
-        </div>
+        {/* Pass handleSignOut to Navbar */}
+        <Navbar handleSignOut={handleSignOut} />
         <main className="flex-grow">
           <Router />
         </main>

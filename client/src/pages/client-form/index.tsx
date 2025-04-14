@@ -54,6 +54,8 @@ const formSchema = insertHealthcareProviderSchema.extend({
     .regex(/^\d+$/, "Phone number must contain only digits"),
   ehrGroupId: z.string().optional().nullable(),
   ehrTenantId: z.string().optional().nullable(),
+  ehrClientId: z.string().optional().nullable(),
+  ehrClientSecret: z.string().optional().nullable(),
   // secretsManagerArn removed
   notes: z.string().optional().nullable(),
   status: providerStatusEnum.optional(),
@@ -87,6 +89,8 @@ const ClientFormPage = () => {
     ehrId: undefined,
     ehrTenantId: "",
     ehrGroupId: "",
+    ehrClientId: "",
+    ehrClientSecret: "",
     // secretsManagerArn removed
     status: "Pending",
     notes: "",
@@ -372,6 +376,9 @@ const ClientFormPage = () => {
                       </FormItem>
                     )}
                   />
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField
                     control={form.control}
                     name="ehrGroupId"
@@ -389,10 +396,48 @@ const ClientFormPage = () => {
                       </FormItem>
                     )}
                   />
-{/* AWS Secrets Manager ARN field removed */}
+                  <FormField
+                    control={form.control}
+                    name="ehrClientId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>EHR Client ID</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Enter client ID for authentication"
+                            {...field}
+                            value={normalizeValue(field.value)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
-
+                
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="ehrClientSecret"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>EHR Client Secret</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="password"
+                            placeholder="Enter client secret for authentication"
+                            {...field}
+                            value={normalizeValue(field.value)}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Secure credential used for API authentication
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  {/* AWS Secrets Manager ARN field removed */}
                   <FormField
                     control={form.control}
                     name="status"
@@ -419,6 +464,9 @@ const ClientFormPage = () => {
                       </FormItem>
                     )}
                   />
+                </div>
+
+                <div className="grid grid-cols-1 gap-6">
                   <FormField
                     control={form.control}
                     name="notes"

@@ -27,11 +27,75 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
+// Sample data for demonstration
+const sampleProviders: HealthcareProvider[] = [
+  {
+    id: "1",
+    providerName: "Karleigh Mcdaniel",
+    providerType: "Clinic",
+    ehrGroupId: "Voluptatum animi qu",
+    contactEmail: "jydutax@mailinator.com",
+    contactPhone: "2323267770",
+    address: "123 Main St, Suite 100, San Francisco, CA 94105",
+    status: "Active",
+    notes: "",
+    ehrId: null,
+    ehrTenantId: null,
+    onboardedDate: null,
+    lastDataFetch: null
+  },
+  {
+    id: "2",
+    providerName: "Northwest Health Partners",
+    providerType: "Hospital",
+    ehrGroupId: "NWHP-2024",
+    contactEmail: "admin@northwesthealth.org",
+    contactPhone: "5035559876",
+    address: "450 Cedar Avenue, Portland, OR 97204",
+    status: "Active",
+    notes: "Regional hospital network",
+    ehrId: null,
+    ehrTenantId: null,
+    onboardedDate: null,
+    lastDataFetch: null
+  },
+  {
+    id: "3",
+    providerName: "Eastside Medical Group",
+    providerType: "Private Practice",
+    ehrGroupId: "EMG-742",
+    contactEmail: "contact@eastsidemed.com",
+    contactPhone: "2065551234",
+    address: "820 Bellevue Way, Bellevue, WA 98004",
+    status: "Pending",
+    notes: "Onboarding in progress",
+    ehrId: null,
+    ehrTenantId: null,
+    onboardedDate: null,
+    lastDataFetch: null
+  },
+  {
+    id: "4",
+    providerName: "Valley Care Specialists",
+    providerType: "Specialist Center",
+    ehrGroupId: "VCS-2023-09",
+    contactEmail: "info@valleycare.net",
+    contactPhone: "4805557654",
+    address: "1275 Desert Palm Drive, Phoenix, AZ 85021",
+    status: "Active",
+    notes: "Cardiology focus",
+    ehrId: null,
+    ehrTenantId: null,
+    onboardedDate: null,
+    lastDataFetch: null
+  }
+];
+
 const ClientListPage = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
-  const [providers, setProviders] = useState<HealthcareProvider[]>([]);
+  const [providers, setProviders] = useState<HealthcareProvider[]>(sampleProviders);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedProviderId, setSelectedProviderId] = useState<string | null>(
     null,
@@ -40,13 +104,17 @@ const ClientListPage = () => {
   // Fetch all providers
   const { data, isLoading, isError, error } = useQuery<HealthcareProvider[]>({
     queryKey: ["/api/providers"],
+    // For demonstration, we're using the sample data directly
+    // In a real app, this would come from the API
+    enabled: false, // Disable actual API call for demo
   });
 
-  useEffect(() => {
-    if (data) {
-      setProviders(data);
-    }
-  }, [data]);
+  // Comment out the useEffect for demo purposes
+  // useEffect(() => {
+  //   if (data) {
+  //     setProviders(data);
+  //   }
+  // }, [data]);
 
   // Filter providers based on search query
   const filteredProviders = providers.filter((provider) => {
@@ -62,10 +130,12 @@ const ClientListPage = () => {
   // Delete provider mutation
   const deleteProviderMutation = useMutation({
     mutationFn: async (id: string) => {
-      await apiRequest("DELETE", `/api/providers/${id}`);
+      // For demo, just remove from local state
+      setProviders(providers.filter(p => p.id !== id));
+      // In a real app: await apiRequest("DELETE", `/api/providers/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/providers"] });
+      // queryClient.invalidateQueries({ queryKey: ["/api/providers"] });
       toast({
         title: "Success",
         description: "Healthcare provider has been deleted successfully.",
@@ -95,8 +165,8 @@ const ClientListPage = () => {
   // Refresh provider data
   const refreshProviderMutation = useMutation({
     mutationFn: async () => {
-      // This would be a more specialized endpoint in a real app
-      await queryClient.invalidateQueries({ queryKey: ["/api/providers"] });
+      // For demo, just show a toast
+      // In a real app: await queryClient.invalidateQueries({ queryKey: ["/api/providers"] });
     },
     onSuccess: () => {
       toast({
@@ -119,18 +189,6 @@ const ClientListPage = () => {
 
   return (
     <div>
-      {/* Header Section */}
-      {/* <div className="bg-primary-600 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
-          <h1 className="text-3xl md:text-4xl font-bold font-sans mb-4">
-            Healthcare Provider Clients
-          </h1>
-          <p className="text-lg">
-            View and manage all registered healthcare providers in the system.
-          </p>
-        </div>
-      </div> */}
-
       {/* Search and Filters */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -171,22 +229,7 @@ const ClientListPage = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-4">
-                      Loading clients...
-                    </TableCell>
-                  </TableRow>
-                ) : isError ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={5}
-                      className="text-center py-4 text-red-500"
-                    >
-                      Error loading clients: {error?.message}
-                    </TableCell>
-                  </TableRow>
-                ) : filteredProviders.length === 0 ? (
+                {filteredProviders.length === 0 ? (
                   <TableRow>
                     <TableCell
                       colSpan={5}
