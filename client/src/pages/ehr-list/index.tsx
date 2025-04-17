@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { EhrSystem } from "@shared/schema";
+import { useState } from "react";
+import { Link } from "wouter";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
 
 import {
   Table,
@@ -12,116 +13,123 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { Search, Edit, Trash2, Plus, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Badge
+} from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { FileText, Edit, Search, Plus, ExternalLink, Link2 } from "lucide-react";
-import { Link } from "wouter";
+
+// EHR System interface
+interface EhrSystem {
+  id: string;
+  systemName: string;
+  apiEndpoint: string;
+  description: string | null;
+  documentationUrl: string | null;
+  status: "Supported" | "Deprecated" | "Beta" | "Development";
+}
+
+// Sample data for demonstration
+const sampleEhrSystems: EhrSystem[] = [
+  {
+    id: "1",
+    systemName: "Athena",
+    apiEndpoint: "https://api.athenahealth.com/v1/fhir",
+    description: "Cloud-based EHR, practice management, and medical billing services with FHIR support",
+    documentationUrl: "https://developer.athenahealth.com/docs",
+    status: "Supported"
+  },
+  {
+    id: "2",
+    systemName: "eClinicalWorks",
+    apiEndpoint: "https://api.eclinicalworks.com/wsi/v2/", 
+    description: "Ambulatory EHR system with comprehensive practice management tools and interoperability solutions",
+    documentationUrl: "https://developer.eclinicalworks.com/docs/",
+    status: "Supported"
+  },
+  {
+    id: "3",
+    systemName: "Cerner",
+    apiEndpoint: "https://api.cerner.com/v1/millennium",
+    description: "RESTful API for accessing Cerner Millennium EHR data",
+    documentationUrl: "https://developer.cerner.com/api-reference",
+    status: "Supported"
+  }
+];
 
 const EhrListPage = () => {
   const { toast } = useToast();
-  const [searchTerm, setSearchTerm] = useState("");
-  const queryClient = useQueryClient();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [ehrSystems, setEhrSystems] = useState<EhrSystem[]>(sampleEhrSystems);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedSystemId, setSelectedSystemId] = useState<string | null>(null);
+  const [showSupportedOnly, setShowSupportedOnly] = useState(true);
 
-  // Fetch all EHR systems
-  const {
-    data: ehrSystems = [],
-    isLoading,
-    error,
-  } = useQuery<EhrSystem[]>({
-    queryKey: ["/api/ehr-systems"],
+  // Filter EHR systems based on search query and status filter
+  const filteredSystems = ehrSystems.filter((system) => {
+    const searchTerm = searchQuery.toLowerCase();
+    const matchesSearch = (
+      system.systemName.toLowerCase().includes(searchTerm) ||
+      system.apiEndpoint.toLowerCase().includes(searchTerm) ||
+      (system.description && system.description.toLowerCase().includes(searchTerm))
+    );
+    
+    // If showSupportedOnly is true, only show systems with "Supported" status
+    return matchesSearch && (!showSupportedOnly || system.status === "Supported");
   });
 
-  // Log success and handle errors
-  useEffect(() => {
-    if (ehrSystems.length > 0) {
-      console.log("Fetched EHR systems:", ehrSystems);
-    }
-    if (error) {
-      console.error("Error fetching EHR systems:", error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch EHR systems. Please try again later.",
-        variant: "destructive",
-      });
-    }
-  }, [ehrSystems, error, toast]);
-
-  // Mutation to update the support status
-  const updateSupportMutation = useMutation({
-    mutationFn: async ({ id, isSupported }: { id: string; isSupported: boolean }) => {
-      const response = await apiRequest(
-        "PATCH", 
-        `/api/ehr-systems/${id}`,
-        { isSupported }
-      );
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/ehr-systems"] });
-      toast({
-        title: "Success",
-        description: "EHR system support status updated successfully.",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: `Failed to update support status: ${error.message}`,
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Handler for toggling support status
-  const handleToggleSupport = (id: string, currentStatus: boolean) => {
-    updateSupportMutation.mutate({ id, isSupported: !currentStatus });
+  const handleDelete = (id: string) => {
+    setSelectedSystemId(id);
+    setDeleteDialogOpen(true);
   };
 
-  // Filter the EHR systems based on the search term
-  const filteredSystems = ehrSystems.filter((system: EhrSystem) => {
-    if (!searchTerm) return true;
+  const confirmDelete = () => {
+    if (selectedSystemId) {
+      // For demo, just remove from local state
+      setEhrSystems(ehrSystems.filter(s => s.id !== selectedSystemId));
+      
+      toast({
+        title: "Success",
+        description: "EHR System has been removed successfully.",
+      });
+      setDeleteDialogOpen(false);
+    }
+  };
 
-    const searchTermLower = searchTerm.toLowerCase();
-    return (
-      system.systemName.toLowerCase().includes(searchTermLower) ||
-      (system.apiEndpoint &&
-        system.apiEndpoint.toLowerCase().includes(searchTermLower)) ||
-      (system.additionalNotes &&
-        system.additionalNotes.toLowerCase().includes(searchTermLower)) ||
-      (system.documentationLink &&
-        system.documentationLink.toLowerCase().includes(searchTermLower))
-    );
-  });
+  // Status badge renderer
+  const renderStatusBadge = (status: string) => {
+    switch (status) {
+      case "Supported":
+        return <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
+          <CheckCircle className="h-3 w-3 mr-1" /> Supported
+        </Badge>;
+      case "Deprecated":
+        return <Badge className="bg-red-100 text-red-800 hover:bg-red-200">
+          <XCircle className="h-3 w-3 mr-1" /> Deprecated
+        </Badge>;
+      case "Beta":
+        return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">
+          <AlertCircle className="h-3 w-3 mr-1" /> Beta
+        </Badge>;
+      case "Development":
+        return <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-200">
+          <AlertCircle className="h-3 w-3 mr-1" /> Development
+        </Badge>;
+      default:
+        return <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-200">{status}</Badge>;
+    }
+  };
 
   return (
     <div>
-      {/* Header Section */}
-      {/* <div className="bg-primary-600 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold font-sans mb-4">
-                EHR Systems
-              </h1>
-              <p className="text-lg">
-                View and manage all your EHR system configurations
-              </p>
-            </div>
-            <div className="mt-6 md:mt-0">
-              <Button asChild size="lg" className="font-semibold">
-                <Link href="/ehr-form">
-                  <Plus className="mr-2 h-5 w-5" />
-                  Add New System
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div> */}
-
       {/* Search and Filters */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -134,15 +142,29 @@ const EhrListPage = () => {
                 type="text"
                 placeholder="Search EHR systems..."
                 className="pl-10"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
           </div>
-          <div>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center space-x-2">
+              <Button 
+                variant={showSupportedOnly ? "default" : "outline"}
+                className="flex items-center gap-2"
+                onClick={() => setShowSupportedOnly(!showSupportedOnly)}
+              >
+                {showSupportedOnly ? (
+                  <CheckCircle className="h-4 w-4" />
+                ) : (
+                  <CheckCircle className="h-4 w-4 text-neutral-300" />
+                )}
+                Supported
+              </Button>
+            </div>
             <Button asChild>
               <Link href="/ehr-form">
-                <Plus className="mr-2 h-4 w-4" /> Add New System
+                <Plus className="mr-2 h-4 w-4" /> Add New EHR System
               </Link>
             </Button>
           </div>
@@ -163,13 +185,7 @@ const EhrListPage = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-4">
-                      Loading EHR systems...
-                    </TableCell>
-                  </TableRow>
-                ) : filteredSystems.length === 0 ? (
+                {filteredSystems.length === 0 ? (
                   <TableRow>
                     <TableCell
                       colSpan={6}
@@ -179,86 +195,55 @@ const EhrListPage = () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredSystems.map((system: EhrSystem) => (
+                  filteredSystems.map((system) => (
                     <TableRow key={system.id} className="hover:bg-neutral-50">
-                      <TableCell className="font-medium">
-                        {system.systemName}
-                        {system.systemVersion && (
-                          <span className="ml-2 text-xs text-neutral-500">
-                            v{system.systemVersion}
-                          </span>
-                        )}
+                      <TableCell className="font-medium">{system.systemName}</TableCell>
+                      <TableCell>
+                        <code className="text-xs bg-neutral-100 p-1 rounded">
+                          {system.apiEndpoint}
+                        </code>
                       </TableCell>
                       <TableCell>
-                        {system.apiEndpoint ? (
-                          <span className="truncate max-w-xs block">
-                            {system.apiEndpoint}
-                          </span>
-                        ) : (
-                          <span className="text-neutral-500 italic">
-                            Not specified
-                          </span>
-                        )}
+                        {system.description || 
+                          <span className="text-neutral-400 italic">No description provided</span>
+                        }
                       </TableCell>
                       <TableCell>
-                        {system.additionalNotes ? (
-                          <span className="line-clamp-2">
-                            {system.additionalNotes}
-                          </span>
-                        ) : (
-                          <span className="text-neutral-500 italic">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {system.documentationLink ? (
+                        {system.documentationUrl ? (
                           <a 
-                            href={system.documentationLink} 
+                            href={system.documentationUrl} 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="flex items-center text-blue-600 hover:text-blue-800 gap-1.5"
+                            className="text-blue-600 hover:text-blue-800 hover:underline"
                           >
-                            <ExternalLink className="h-4 w-4" />
-                            <span className="truncate max-w-xs">Documentation</span>
+                            Documentation
                           </a>
                         ) : (
-                          <span className="text-neutral-500 italic">
-                            Not specified
-                          </span>
+                          <span className="text-neutral-400 italic">No documentation</span>
                         )}
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-3">
-                          <Badge
-                            variant={system.isSupported ? "default" : "outline"}
-                            className={
-                              system.isSupported
-                                ? "bg-green-100 text-green-800 hover:bg-green-200"
-                                : ""
-                            }
-                          >
-                            {system.isSupported ? "Supported" : "Not Supported"}
-                          </Badge>
-                          <Switch
-                            checked={system.isSupported === true}
-                            onCheckedChange={() => handleToggleSupport(system.id, !!system.isSupported)}
-                            aria-label={`Set ${system.systemName} support status`}
-                          />
-                        </div>
+                        {renderStatusBadge(system.status)}
                       </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-8"
-                            asChild
-                          >
-                            <Link href={`/ehr-form/${system.id}`}>
-                              <Edit className="h-4 w-4 mr-1" />
-                              Edit
-                            </Link>
-                          </Button>
-                        </div>
+                      <TableCell className="text-right space-x-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          asChild
+                          title="Edit EHR system"
+                        >
+                          <Link href={`/ehr-form?id=${system.id}`}>
+                            <Edit className="h-4 w-4 text-primary-600" />
+                          </Link>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDelete(system.id)}
+                          title="Delete EHR system"
+                        >
+                          <Trash2 className="h-4 w-4 text-red-600" />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))
@@ -266,8 +251,51 @@ const EhrListPage = () => {
               </TableBody>
             </Table>
           </div>
+          <div className="bg-neutral-50 px-4 py-3 border-t border-neutral-200 sm:px-6">
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-neutral-700">
+                Showing <span>{filteredSystems.length}</span>{" "}
+                {filteredSystems.length === 1 ? "system" : "systems"}
+              </div>
+              <div className="flex-1 flex justify-between sm:justify-end">
+                <Button variant="outline" size="sm" disabled className="mr-3">
+                  Previous
+                </Button>
+                <Button variant="outline" size="sm" disabled>
+                  Next
+                </Button>
+              </div>
+            </div>
+          </div>
         </Card>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Deletion</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this EHR system? This action cannot be undone 
+              and may affect connected healthcare providers.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

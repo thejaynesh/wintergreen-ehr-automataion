@@ -1,0 +1,20 @@
+{
+  "dev": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-wintergreenehrautoma-dev-f3ca3-authRole",
+      "UnauthRoleArn": "arn:aws:iam::851725283526:role/amplify-wintergreenehrautoma-dev-f3ca3-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::851725283526:role/amplify-wintergreenehrautoma-dev-f3ca3-authRole",
+      "Region": "us-east-1",
+      "DeploymentBucketName": "amplify-wintergreenehrautoma-dev-f3ca3-deployment",
+      "UnauthRoleName": "amplify-wintergreenehrautoma-dev-f3ca3-unauthRole",
+      "StackName": "amplify-wintergreenehrautoma-dev-f3ca3",
+      "StackId": "arn:aws:cloudformation:us-east-1:851725283526:stack/amplify-wintergreenehrautoma-dev-f3ca3/0f1c5ea0-18da-11f0-8e15-0afff2b91c67",
+      "AmplifyAppId": "d38lys5nwc6tqa"
+    },
+    "categories": {
+      "auth": {
+        "wintergreenehrautomac81a8a37": {}
+      }
+    }
+  }
+}
